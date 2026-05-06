@@ -1,6 +1,6 @@
 import type { ExamRepository } from "../Exams/Exam.repository.js";
 import type { SubmissionRepository } from "./Submission.repository.js";
-import { processarGabaritos } from "./Template.service.js";
+import { submissionQueue } from "./Submission.queue.js";
 import { gradeExam } from "./Grade.service.js";
 
 export class SubmissionService {
@@ -19,60 +19,46 @@ export class SubmissionService {
     if (!exam) {
       throw new Error("EXAM_NOT_FOUND");
     }
-    console.log("passou por aqui");
+
     const processedFilePaths = files.map((f) => {
       return f.path.replace("/upload/", "/upload/e_grayscale,e_contrast:100/");
     });
 
     const filePaths = files.map((f) => f.path);
+
     const pendingSubmissions = await Promise.all(
       files.map((file, index) =>
         this._submissionRepo.create({
           examId,
           classId: exam.classId,
-          studentName: file.originalname.split(".")[0], // Tira o ".jpg" / ".pdf" do nome
+          studentName: file.originalname.split(".")[0],
           imageUrl: processedFilePaths[index],
           status: "pending",
         }),
       ),
     );
 
-    const iaResults = await processarGabaritos(filePaths);
+    const jobs = pendingSubmissions.map((submission, index) => ({
+      name: `submission-${submission._id}`,
+      data: {
+        submissionId: submission._id.toString(),
+        examId: examId,
+        imageUrl: filePaths[index], // A URL da imagem a ser lida
+        answerKey: exam.answerKey,
+        questionsCount: exam.questionsCount,
+      },
+      opts: {
+        attempts: 3, // tenta 3 vezes (aumentar depois)
+        backoff: {
+          type: "exponential",
+          delay: 2000,
+        },
+      },
+    }));
 
-    const finalResults = [];
+    await submissionQueue.addBulk(jobs);
 
-    for (let i = 0; i < pendingSubmissions.length; i++) {
-      const submission = pendingSubmissions[i];
-      const studentMarks = iaResults[i];
-
-      let updateData: any = {};
-
-      if (!studentMarks || Object.keys(studentMarks).length === 0) {
-        updateData = { status: "error" };
-      } else {
-        const gradeResult = gradeExam(
-          exam.answerKey,
-          studentMarks,
-          exam.questionsCount,
-        );
-
-        updateData = {
-          status: "success",
-          totalCorrect: gradeResult.totalCorrect,
-          score: gradeResult.score,
-          details: gradeResult.details,
-        };
-      }
-
-      const updatedSubmission = await this._submissionRepo.updateStatusAndScore(
-        submission._id.toString(),
-        updateData,
-      );
-      const plainObject = JSON.parse(JSON.stringify(updatedSubmission));
-      finalResults.push(plainObject);
-    }
-
-    return finalResults;
+    return pendingSubmissions.map((sub) => JSON.parse(JSON.stringify(sub)));
   }
 
   async getSubmissionsByClass(classId: string) {

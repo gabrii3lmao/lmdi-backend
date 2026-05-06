@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import "dotenv/config";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import "./modules/Submission/Submission.queue.js";
+
 const app = express();
 
 app.use(
