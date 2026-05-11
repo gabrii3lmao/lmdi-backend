@@ -1,95 +1,90 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import type { ExamService } from "./Exam.service.js";
+import type { ExamValidationType } from "./dto/create-exam.js";
+import { HttpException } from "../../config/errorHandler.js";
 
 export class ExamController {
-  constructor(private readonly _examService: ExamService) {
-    this.create = this.create.bind(this);
-    this.listByClass = this.listByClass.bind(this);
-    this.update = this.update.bind(this);
-    this.delete = this.delete.bind(this);
-  }
+  constructor(private readonly _examService: ExamService) {}
 
-  async create(req: Request, res: Response) {
+  create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const teacherId = req.user?.id;
-      if (!teacherId) return res.status(401).json({ error: "Não autenticado" });
 
-      const exam = await this._examService.createExam(
-        { ...req.body },
-        teacherId,
-      );
-      return res.status(201).json({ message: "Gabarito criado", exam });
-    } catch (error: any) {
-      this.handleError(res, error);
-    }
-  }
-
-  async update(req: Request, res: Response) {
-    try {
-      const teacherId = req.user?.id;
-      if (!teacherId) return res.status(401).json({ error: "Não autenticado" });
-
-      const { examId } = req.params;
-      const updatedExam = await this._examService.updateExam(
-        examId as string,
-        { ...req.body },
-        teacherId,
-      );
-
-      if (!updatedExam) {
-        return res
-          .status(404)
-          .json({ error: "Gabarito não encontrado ou acesso negado" });
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
       }
 
-      return res
-        .status(200)
-        .json({ message: "Gabarito atualizado", exam: updatedExam });
-    } catch (error: any) {
-      this.handleError(res, error);
+      const examData = req.body as ExamValidationType;
+
+      const exam = await this._examService.createExam(examData, teacherId);
+
+      return res.status(201).json({
+        message: "Gabarito criado",
+        exam,
+      });
+    } catch (error) {
+      next(error);
     }
-  }
+  };
 
-  async delete(req: Request, res: Response) {
-    const teacherId = req.user?.id;
-    if (!teacherId) return res.status(401).json({ error: "Não autenticado" });
-
+  update = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const teacherId = req.user?.id;
+
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
       const { examId } = req.params;
-      await this._examService.deleteCascadeByExamId(
+
+      const examData = req.body as Partial<ExamValidationType>;
+
+      const updatedExam = await this._examService.updateExam(
         examId as string,
+        examData,
         teacherId,
       );
-      await this._examService.deleteExam(examId as string, teacherId);
-      return res.status(200).json({ message: "Gabarito deletado" });
-    } catch (error: any) {
-      this.handleError(res, error);
-    }
-  }
 
-  async listByClass(req: Request, res: Response) {
+      return res.status(200).json({
+        message: "Gabarito atualizado",
+        exam: updatedExam,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  delete = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const teacherId = req.user?.id;
+
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
+      const { examId } = req.params;
+
+      await this._examService.deleteCascadeByExamId(examId as string, teacherId);
+
+      await this._examService.deleteExam(examId as string, teacherId);
+
+      return res.status(200).json({
+        message: "Gabarito deletado",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  listByClass = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { classId } = req.params;
-      const exams = await this._examService.getExamsByClass(classId as string);
-      return res.status(200).json(exams);
-    } catch (error: any) {
-      return res.status(500).json({ error: error.message });
-    }
-  }
 
-  private handleError(res: Response, error: any) {
-    if (error.message === "CLASS_NOT_FOUND") {
-      return res.status(404).json({ error: "Classe não encontrada" });
+      const exams = await this._examService.getExamsByClass(classId as string);
+
+      return res.status(200).json(exams);
+    } catch (error) {
+      next(error);
     }
-    if (error.message === "UNAUTHORIZED") {
-      return res.status(403).json({ error: "Não autorizado" });
-    }
-    if (error.message === "EXAM_NOT_FOUND_OR_UNAUTHORIZED") {
-      return res
-        .status(404)
-        .json({ error: "Gabarito não encontrado ou acesso negado" });
-    }
-    console.error(error);
-    return res.status(500).json({ error: "Erro interno no servidor" });
-  }
+  };
 }

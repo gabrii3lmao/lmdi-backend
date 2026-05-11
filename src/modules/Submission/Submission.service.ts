@@ -1,7 +1,7 @@
 import type { ExamRepository } from "../Exams/Exam.repository.js";
 import type { SubmissionRepository } from "./Submission.repository.js";
 import { submissionQueue } from "./Submission.queue.js";
-import { gradeExam } from "./Grade.service.js";
+import { HttpException } from "../../config/errorHandler.js";
 
 export class SubmissionService {
   constructor(
@@ -17,12 +17,12 @@ export class SubmissionService {
     const exam = await this._examRepo.findByIdAndTeacher(examId, teacherId);
 
     if (!exam) {
-      throw new Error("EXAM_NOT_FOUND");
+      throw new HttpException("Gabarito não encontrado", 404);
     }
 
-    const processedFilePaths = files.map((f) => {
-      return f.path.replace("/upload/", "/upload/e_grayscale,e_contrast:100/");
-    });
+    const processedFilePaths = files.map((f) =>
+      f.path.replace("/upload/", "/upload/e_grayscale,e_contrast:100/"),
+    );
 
     const filePaths = files.map((f) => f.path);
 
@@ -42,13 +42,13 @@ export class SubmissionService {
       name: `submission-${submission._id}`,
       data: {
         submissionId: submission._id.toString(),
-        examId: examId,
-        imageUrl: filePaths[index], // A URL da imagem a ser lida
+        examId,
+        imageUrl: filePaths[index],
         answerKey: exam.answerKey,
         questionsCount: exam.questionsCount,
       },
       opts: {
-        attempts: 3, // tenta 3 vezes (aumentar depois)
+        attempts: 3,
         backoff: {
           type: "exponential",
           delay: 2000,
@@ -69,7 +69,7 @@ export class SubmissionService {
     return await this._submissionRepo.findByExamId(examId);
   }
 
-  async getSubmissionaAnswers(submissionId: string) {
+  async getSubmissionAnswers(submissionId: string) {
     return await this._submissionRepo.getSubmissionsAnswersById(submissionId);
   }
 }

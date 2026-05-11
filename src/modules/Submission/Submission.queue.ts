@@ -52,9 +52,15 @@ const worker = new Worker(
 
 worker.on("failed", async (job, err) => {
   if (job) {
-    console.log(`Job ${job.id} esgotou as tentativas e falhou.`);
-    await submissionRepo.updateStatusAndScore(job.data.submissionId, {
-      status: "error",
-    });
+    if (job.attemptsMade === job.opts.attempts) {
+      console.log(`Job ${job.id} esgotou as tentativas e falhou.`);
+      await submissionRepo.updateStatusAndScore(job.data.submissionId, {
+        status: "error",
+      });
+    } else {
+      console.log(
+        `Job ${job.id} falhou (tentativa ${job.attemptsMade}). Tentando novamente...`,
+      );
+    }
   }
 });

@@ -5,7 +5,7 @@ import "dotenv/config";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import "./modules/Submission/Submission.queue.js";
-
+import errorMiddleware from "./middlewares/errorMiddleware.js";
 const app = express();
 
 app.use(
@@ -19,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/api", Router);
+app.use(errorMiddleware);
 
 async function bootstrap() {
   try {
@@ -26,7 +27,7 @@ async function bootstrap() {
     console.log("Connected to MongoDB!");
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+      console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Failed to connect to MongoDB:", error);

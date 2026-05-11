@@ -1,6 +1,8 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import type { SubmissionService } from "./Submission.service.js";
-import z from "zod";
+import { HttpException } from "../../config/errorHandler.js";
+import type { CreateSubmissionDTO } from "./dto/submission.dto.js";
+
 interface AuthRequest extends Request {
   user?: { id: string };
 }
@@ -8,17 +10,25 @@ interface AuthRequest extends Request {
 export class SubmissionController {
   constructor(private readonly _submissionService: SubmissionService) {}
 
-  createSubmission = async (req: AuthRequest, res: Response) => {
+  createSubmission = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const files = req.files as Express.Multer.File[];
-      const { examId } = req.body;
       const teacherId = req.user?.id;
 
-      if (!teacherId) return res.status(401).json({ error: "Não autenticado" });
-      if (!examId)
-        return res.status(400).json({ error: "examId é obrigatório" });
-      if (!files?.length)
-        return res.status(400).json({ error: "Nenhuma imagem" });
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
+      const files = req.files as Express.Multer.File[];
+
+      if (!files?.length) {
+        throw new HttpException("Nenhuma imagem enviada", 400);
+      }
+
+      const { examId } = req.body as CreateSubmissionDTO;
 
       const results = await this._submissionService.processSubmissions(
         examId,
@@ -27,35 +37,37 @@ export class SubmissionController {
       );
 
       return res.status(200).json(results);
-    } catch (error: any) {
-      if (error.message === "EXAM_NOT_FOUND") {
-        return res
-          .status(403)
-          .json({ error: "Exame não encontrado/autorizado" });
-      }
-      return res.status(500).json({ error: "Erro interno na correção" });
+    } catch (error) {
+      next(error);
     }
   };
 
-  getAllSubmissions = async (req: AuthRequest, res: Response) => {
+  getAllSubmissions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const examId = z.string().parse(req.query.examId);
-      if (!examId)
-        return res.status(400).json({ error: "examId é obrigatório" });
-      const submissions = await this._submissionService.getSubmissionsByExam(
-        examId as string,
-      );
+      const { examId } = req.query as {
+        examId: string;
+      };
+
+      const submissions =
+        await this._submissionService.getSubmissionsByExam(examId);
+
       return res.status(200).json(submissions);
     } catch (error) {
-      return res.status(500).json({ error: "Erro ao listar submissões" });
+      next(error);
     }
   };
 
-  getSubmissionsByClass = async (req: AuthRequest, res: Response) => {
+  getSubmissionsByClass = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const classId = z.string().parse(req.params.classId);
-      if (!classId)
-        return res.status(400).json({ error: "classId é obrigatório" });
+      const { classId } = req.params;
 
       const submissions = await this._submissionService.getSubmissionsByClass(
         classId as string,
@@ -63,31 +75,31 @@ export class SubmissionController {
 
       return res.status(200).json(submissions);
     } catch (error) {
-      return res
-        .status(500)
-        .json({ error: "Erro ao listar submissões por turma" });
+      next(error);
     }
   };
 
-  getSubmissionAnswers = async (req: AuthRequest, res: Response) => {
+  getSubmissionAnswers = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const submissionId = z.string().parse(req.params.submissionId);
-      if (!submissionId)
-        return res.status(400).json({ error: "submissionId é obrigatório" });
+      const { submissionId } = req.params;
 
-      const answers = await this._submissionService.getSubmissionaAnswers(
+      const answers = await this._submissionService.getSubmissionAnswers(
         submissionId as string,
       );
 
       if (!answers) {
-        return res.status(404).json({ error: "Submissão não encontrada" });
+        throw new HttpException("Submissão não encontrada", 404);
       }
 
-      return res.status(200).json({ answers });
+      return res.status(200).json({
+        answers,
+      });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ error: "Erro ao obter respostas da submissão" });
+      next(error);
     }
   };
 }

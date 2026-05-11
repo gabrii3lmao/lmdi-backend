@@ -1,6 +1,7 @@
 import { ClassRepository } from "./Class.repository.js";
 import { SubmissionRepository } from "../Submission/Submission.repository.js";
 import { type IClass } from "./classModel.js";
+import { HttpException } from "../../config/errorHandler.js";
 
 export class ClassService {
   constructor(
@@ -27,9 +28,10 @@ export class ClassService {
   ): Promise<IClass | null> {
     const turma = await this._classRepository.findById(classId);
 
-    if (!turma) throw new Error("NOT_FOUND");
+    if (!turma) throw new HttpException("Turma não encontrada", 404);
+
     if (turma.teacherId.toString() !== teacherId)
-      throw new Error("UNAUTHORIZED");
+      throw new HttpException("Não autorizado.", 401);
 
     return await this._classRepository.update(classId, classData);
   }
@@ -37,9 +39,10 @@ export class ClassService {
   async deleteClass(classId: string, teacherId: string) {
     const turma = await this._classRepository.findById(classId);
 
-    if (!turma) throw new Error("NOT_FOUND");
+    if (!turma) throw new HttpException("Turma não encontrada", 404);
     if (turma.teacherId.toString() !== teacherId)
-      throw new Error("UNAUTHORIZED");
+      throw new HttpException("Não autorizado.", 401);
+
 
     const submissions = await this._submissionRepo.findByClass(classId);
     const paths = submissions.map((s) => s.imageUrl);

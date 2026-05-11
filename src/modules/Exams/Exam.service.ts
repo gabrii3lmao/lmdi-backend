@@ -1,8 +1,9 @@
 import { ExamRepository } from "./Exam.repository.js";
 import type { IExam } from "./Exam.model.js";
 import type { ExamValidationType } from "./dto/create-exam.js";
-import { ClassRepository } from "../Classes-/Class.repository.js";
+import { ClassRepository } from "../Classes/Class.repository.js";
 import { SubmissionRepository } from "../Submission/Submission.repository.js";
+import { HttpException } from "../../config/errorHandler.js";
 
 export class ExamService {
   constructor(
@@ -18,11 +19,11 @@ export class ExamService {
     const classExists = await this._classRepository.findById(examData.classId);
 
     if (!classExists) {
-      throw new Error("CLASS_NOT_FOUND");
+      throw new HttpException("Classe não encontrada", 404);
     }
 
     if (classExists.teacherId.toString() !== teacherId) {
-      throw new Error("UNAUTHORIZED");
+      throw new HttpException("Não autorizado", 403);
     }
 
     return await this._examRepository.create({
@@ -42,7 +43,7 @@ export class ExamService {
     );
 
     if (!exam) {
-      throw new Error("EXAM_NOT_FOUND_OR_UNAUTHORIZED");
+      throw new HttpException("Gabarito não encontrado", 404);
     }
 
     return await this._examRepository.update(examId, updateData);
@@ -55,7 +56,7 @@ export class ExamService {
     );
 
     if (!exam) {
-      throw new Error("EXAM_NOT_FOUND_OR_UNAUTHORIZED");
+      throw new HttpException("Gabarito não encontrado", 404);
     }
 
     await this._examRepository.delete(examId);
@@ -75,7 +76,7 @@ export class ExamService {
     );
 
     if (!exam) {
-      throw new Error("EXAM_NOT_FOUND_OR_UNAUTHORIZED");
+      throw new HttpException("Gabarito não encontrado", 404);
     }
 
     await this._submissionRepository.deleteManyByExamId(examId);
