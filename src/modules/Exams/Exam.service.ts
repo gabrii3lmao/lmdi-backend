@@ -70,6 +70,7 @@ export class ExamService {
     }
 
     if(classExist.teacherId.toString() !== teacherId) {
+      console.log("Falhou aqui");
       throw new HttpException("Não autorizado", 403);
     }
     return await this._examRepository.findByClassId(classId);
