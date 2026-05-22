@@ -1,12 +1,15 @@
-import generateToken from "../../services/jwtService.js";
+import generateToken from "../../config/jwtService.js";
 import type { LoginUserType, RegisterUserType } from "./dto/userTypes.js";
 import { UserRepository } from "./User.repository.js";
 import crypto from "crypto";
 import { EmailService } from "./Email.service.js";
-
+import { emaillQueue } from "./Email.queue.js";
 
 export class UserService {
-  constructor(private readonly _userRepository: UserRepository, private readonly _emailService: EmailService) {}
+  constructor(
+    private readonly _userRepository: UserRepository,
+    private readonly _emailService: EmailService,
+  ) {}
 
   async register(userData: RegisterUserType) {
     const existingUser = await this._userRepository.findByEmail(userData.email);
@@ -57,7 +60,20 @@ export class UserService {
 
     await this._userRepository.setPasswordResetToken(email, token, expires);
 
-    await this._emailService.sendPasswordResetEmail(user.email, token);
+    await emaillQueue.add(
+      "sendPasswordResetEmail",
+      {
+        to: user.email,
+        token,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 60000,
+        },
+      },
+    );
   }
 
   async resetPassword(token: string, newPassword: string) {
