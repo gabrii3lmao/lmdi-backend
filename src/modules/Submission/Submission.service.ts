@@ -2,6 +2,7 @@ import type { ExamRepository } from "../Exams/Exam.repository.js";
 import type { SubmissionRepository } from "./Submission.repository.js";
 import { submissionQueue } from "./Submission.queue.js";
 import { HttpException } from "../../config/errorHandler.js";
+import type { ISubmission } from "./Submission.model.js";
 
 export class SubmissionService {
   constructor(
@@ -71,5 +72,15 @@ export class SubmissionService {
 
   async getSubmissionAnswers(submissionId: string) {
     return await this._submissionRepo.getSubmissionsAnswersById(submissionId);
+  }
+
+  async updateSubmission(submissionId: string, updateData: Partial<ISubmission>) {
+    const submission = await this._submissionRepo.findById(submissionId);
+
+    if (!submission) {
+      throw new HttpException("Submissão não encontrada", 404);
+    }
+
+    return await this._submissionRepo.update(submissionId, updateData);
   }
 }

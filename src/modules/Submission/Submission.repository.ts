@@ -40,4 +40,14 @@ export class SubmissionRepository {
     if (!doc) return null;
     return doc.details.map((d) => d.marked); // ["A", "B", "C"]
   }
+
+  async findById(submissionId: string) {
+    return await Submission.findById(submissionId);
+  }
+
+  async update(submissionId: string, updateData: Partial<ISubmission>) {
+    return await Submission.findByIdAndUpdate(submissionId, updateData, {
+      returnDocument: "after",
+    });
+  }
 }

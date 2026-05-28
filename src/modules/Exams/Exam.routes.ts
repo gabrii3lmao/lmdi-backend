@@ -7,7 +7,7 @@ import { ExamService } from "./Exam.service.js";
 import { ExamRepository } from "./Exam.repository.js";
 import { ClassRepository } from "../Classes/Class.repository.js";
 import { SubmissionRepository } from "../Submission/Submission.repository.js";
-
+import { SubmissionService } from "../Submission/Submission.service.js";
 import { examValidationSchema } from "./dto/create-exam.js";
 
 const examRouter = Router();
@@ -15,8 +15,10 @@ const examRouter = Router();
 const classRepo = new ClassRepository();
 const examRepo = new ExamRepository();
 const submissionRepo = new SubmissionRepository();
+const submissionService = new SubmissionService(examRepo, submissionRepo);
 
-const examService = new ExamService(examRepo, classRepo, submissionRepo);
+
+const examService = new ExamService(examRepo, classRepo, submissionRepo, submissionService);
 const examController = new ExamController(examService);
 
 examRouter.use(authMiddleware);
