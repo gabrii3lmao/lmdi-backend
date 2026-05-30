@@ -5,6 +5,9 @@ import crypto from "crypto";
 import { EmailService } from "./Email.service.js";
 import { emaillQueue } from "./Email.queue.js";
 import { HttpException } from "../../config/errorHandler.js";
+import { OAuth2Client } from "google-auth-library";
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export class UserService {
   constructor(
@@ -99,7 +102,10 @@ export class UserService {
   }
 
   async refreshAccessToken(incomingToken: string) {
-    const decoded = verifyRefreshToken(incomingToken) as { id: string; email: string };
+    const decoded = verifyRefreshToken(incomingToken) as {
+      id: string;
+      email: string;
+    };
     const user = await this._userRepository.findById(decoded.id);
 
     if (!user || user.refreshToken !== incomingToken) {
@@ -111,8 +117,56 @@ export class UserService {
       email: user.email,
     });
 
-    await this._userRepository.updateRefreshToken(user._id.toString(), refreshToken);
+    await this._userRepository.updateRefreshToken(
+      user._id.toString(),
+      refreshToken,
+    );
 
     return { accessToken, refreshToken };
+  }
+
+  async googleLogin(idToken: string) {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload || !payload.email) {
+      throw new HttpException("Token do Google inválido", 401);
+    }
+
+    const { email, name, sub: googleId } = payload;
+
+    let user = await this._userRepository.findByEmail(email);
+
+    if (!user) {
+      user = await this._userRepository.create({
+        email,
+        name: name || "Usuário do Google",
+        password: crypto.randomBytes(20).toString("hex"), // Senha aleatória para usuários do Google
+      });
+    }
+
+    const { accessToken, refreshToken } = generateToken({
+      id: user._id,
+      email: user.email,
+    });
+
+    await this._userRepository.updateRefreshToken(
+      user._id.toString(),
+      refreshToken,
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    };
   }
 }

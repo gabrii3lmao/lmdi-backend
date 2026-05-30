@@ -15,6 +15,7 @@ authRouter.post("/signup", userController.register);
 authRouter.post("/signin", userController.login);
 authRouter.post("/signout", authMiddleware, userController.logout);
 authRouter.post("/refresh-token", userController.refreshToken);
+authRouter.post("/google", userController.googleLogin);
 
 authRouter.post("/forgot-password", userController.forgotPassword);
 authRouter.post("/reset-password/:token", userController.resetPassword);
