@@ -15,4 +15,5 @@ export const globalLimiter = rateLimit({
   }),
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
 });
