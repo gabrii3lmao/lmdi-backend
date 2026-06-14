@@ -9,7 +9,7 @@ import errorMiddleware from "./middlewares/errorMiddleware.js";
 import { globalLimiter } from "./middlewares/rateLimiterMiddleware.js";
 
 const app = express();
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 app.use(
   cors({
     origin: [process.env.FRONTEND_URL!, "http://localhost:5173"],
