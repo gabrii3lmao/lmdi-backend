@@ -11,6 +11,19 @@ export class ClassRepository {
     return await Class.find({ teacherId });
   }
 
+  async findAllByTeacherPaginated(
+    teacherId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: IClass[]; totalItems: number }> {
+    const skip = (page - 1) * limit;
+    const [data, totalItems] = await Promise.all([
+      Class.find({ teacherId }).skip(skip).limit(limit),
+      Class.countDocuments({ teacherId }),
+    ]);
+    return { data, totalItems };
+  }
+
   async findById(id: string): Promise<IClass | null> {
     return await Class.findById(id);
   }

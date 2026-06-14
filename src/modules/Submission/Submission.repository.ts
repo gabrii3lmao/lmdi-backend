@@ -18,6 +18,19 @@ export class SubmissionRepository {
     return await Submission.find({ examId });
   }
 
+  async findByExamIdPaginated(
+    examId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: ISubmission[]; totalItems: number }> {
+    const skip = (page - 1) * limit;
+    const [data, totalItems] = await Promise.all([
+      Submission.find({ examId }).skip(skip).limit(limit),
+      Submission.countDocuments({ examId }),
+    ]);
+    return { data, totalItems };
+  }
+
   async findByIdAndClassId(id: string, classId: string) {
     return await Submission.findOne({
       _id: id,
@@ -31,6 +44,19 @@ export class SubmissionRepository {
 
   async findByClass(classId: string) {
     return await Submission.find({ classId });
+  }
+
+  async findByClassPaginated(
+    classId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: ISubmission[]; totalItems: number }> {
+    const skip = (page - 1) * limit;
+    const [data, totalItems] = await Promise.all([
+      Submission.find({ classId }).skip(skip).limit(limit),
+      Submission.countDocuments({ classId }),
+    ]);
+    return { data, totalItems };
   }
 
   async getSubmissionsAnswersById(submissionId: string) {

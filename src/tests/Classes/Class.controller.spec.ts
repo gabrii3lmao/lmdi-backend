@@ -65,16 +65,25 @@ describe("ClassController", () => {
   });
 
   describe("getClasses", () => {
-    it("deve retornar lista de turmas do professor", async () => {
-      vi.mocked(mockService.findAllByTeacher!).mockResolvedValue([
-        { _id: "class-1", name: "Turma A" },
-      ] as any);
+    it("deve retornar lista paginada de turmas do professor", async () => {
+      req.query = { page: "1", limit: "10" };
+      vi.mocked(mockService.findAllByTeacher!).mockResolvedValue({
+        data: [{ _id: "class-1", name: "Turma A" }],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      } as any);
 
       await controller.getClasses(req as Request, res as Response, next as NextFunction);
 
-      expect(mockService.findAllByTeacher).toHaveBeenCalledWith("teacher-1");
+      expect(mockService.findAllByTeacher).toHaveBeenCalledWith("teacher-1", 1, 10);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith([{ _id: "class-1", name: "Turma A" }]);
+      expect(res.json).toHaveBeenCalledWith({
+        data: [{ _id: "class-1", name: "Turma A" }],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      });
     });
 
     it("deve chamar next se não autenticado", async () => {

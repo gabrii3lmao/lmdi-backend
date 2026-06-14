@@ -2,6 +2,7 @@ import { ClassRepository } from "./Class.repository.js";
 import { SubmissionRepository } from "../Submission/Submission.repository.js";
 import { type IClass } from "./classModel.js";
 import { HttpException } from "../../config/errorHandler.js";
+import type { PaginatedResponse } from "../common/dto/pagination.dto.js";
 
 export class ClassService {
   constructor(
@@ -13,8 +14,23 @@ export class ClassService {
     return await this._classRepository.create(classData);
   }
 
-  async findAllByTeacher(teacherId: string): Promise<IClass[]> {
-    return await this._classRepository.findAllByTeacher(teacherId);
+  async findAllByTeacher(
+    teacherId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<IClass>> {
+    const { data, totalItems } =
+      await this._classRepository.findAllByTeacherPaginated(
+        teacherId,
+        page,
+        limit,
+      );
+    return {
+      data,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+    };
   }
 
   async findById(id: string): Promise<IClass | null> {

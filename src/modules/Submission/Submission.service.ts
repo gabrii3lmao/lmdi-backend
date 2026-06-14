@@ -3,6 +3,7 @@ import type { SubmissionRepository } from "./Submission.repository.js";
 import { submissionQueue } from "./Submission.queue.js";
 import { HttpException } from "../../config/errorHandler.js";
 import type { ISubmission } from "./Submission.model.js";
+import type { PaginatedResponse } from "../common/dto/pagination.dto.js";
 
 export class SubmissionService {
   constructor(
@@ -66,8 +67,38 @@ export class SubmissionService {
     return await this._submissionRepo.findByClass(classId);
   }
 
+  async getSubmissionsByClassPaginated(
+    classId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<ISubmission>> {
+    const { data, totalItems } =
+      await this._submissionRepo.findByClassPaginated(classId, page, limit);
+    return {
+      data,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+    };
+  }
+
   async getSubmissionsByExam(examId: string) {
     return await this._submissionRepo.findByExamId(examId);
+  }
+
+  async getSubmissionsByExamPaginated(
+    examId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<ISubmission>> {
+    const { data, totalItems } =
+      await this._submissionRepo.findByExamIdPaginated(examId, page, limit);
+    return {
+      data,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+    };
   }
 
   async getSubmissionAnswers(submissionId: string) {

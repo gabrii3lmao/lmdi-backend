@@ -15,7 +15,9 @@ describe("SubmissionController", () => {
     mockService = {
       processSubmissions: vi.fn(),
       getSubmissionsByExam: vi.fn(),
+      getSubmissionsByExamPaginated: vi.fn(),
       getSubmissionsByClass: vi.fn(),
+      getSubmissionsByClassPaginated: vi.fn(),
       getSubmissionAnswers: vi.fn(),
     };
     controller = new SubmissionController(mockService as SubmissionService);
@@ -95,22 +97,41 @@ describe("SubmissionController", () => {
   });
 
   describe("getAllSubmissions", () => {
-    it("deve retornar 200 com lista de submissões", async () => {
-      req.query = { examId: "exam-123" };
-      const mockSubs = [{ _id: "sub-1" }];
-      vi.mocked(mockService.getSubmissionsByExam!).mockResolvedValue(mockSubs as any);
+    it("deve retornar 200 com submissões paginadas", async () => {
+      req.query = { examId: "exam-123", page: "1", limit: "10" };
+      const mockResult = {
+        data: [{ _id: "sub-1" }],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      };
+      vi.mocked(mockService.getSubmissionsByExamPaginated!).mockResolvedValue(mockResult as any);
 
       await controller.getAllSubmissions(req as Request, res as Response, next as NextFunction);
 
-      expect(mockService.getSubmissionsByExam).toHaveBeenCalledWith("exam-123");
+      expect(mockService.getSubmissionsByExamPaginated).toHaveBeenCalledWith("exam-123", 1, 10);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(mockSubs);
+      expect(res.json).toHaveBeenCalledWith(mockResult);
+    });
+
+    it("deve usar defaults page=1 limit=10 se não fornecidos", async () => {
+      req.query = { examId: "exam-123" };
+      vi.mocked(mockService.getSubmissionsByExamPaginated!).mockResolvedValue({
+        data: [],
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
+      } as any);
+
+      await controller.getAllSubmissions(req as Request, res as Response, next as NextFunction);
+
+      expect(mockService.getSubmissionsByExamPaginated).toHaveBeenCalledWith("exam-123", 1, 10);
     });
 
     it("deve chamar next com erro se o service lançar exceção", async () => {
       req.query = { examId: "exam-123" };
       const error = new Error("DB error");
-      vi.mocked(mockService.getSubmissionsByExam!).mockRejectedValue(error);
+      vi.mocked(mockService.getSubmissionsByExamPaginated!).mockRejectedValue(error);
 
       await controller.getAllSubmissions(req as Request, res as Response, next as NextFunction);
 
@@ -119,13 +140,19 @@ describe("SubmissionController", () => {
   });
 
   describe("getSubmissionsByClass", () => {
-    it("deve retornar 200 com submissões da turma", async () => {
+    it("deve retornar 200 com submissões paginadas da turma", async () => {
       req.params = { classId: "class-123" };
-      vi.mocked(mockService.getSubmissionsByClass!).mockResolvedValue([{ _id: "sub-1" }] as any);
+      req.query = { page: "1", limit: "10" };
+      vi.mocked(mockService.getSubmissionsByClassPaginated!).mockResolvedValue({
+        data: [{ _id: "sub-1" }],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      } as any);
 
       await controller.getSubmissionsByClass(req as Request, res as Response, next as NextFunction);
 
-      expect(mockService.getSubmissionsByClass).toHaveBeenCalledWith("class-123");
+      expect(mockService.getSubmissionsByClassPaginated).toHaveBeenCalledWith("class-123", 1, 10);
       expect(res.status).toHaveBeenCalledWith(200);
     });
   });

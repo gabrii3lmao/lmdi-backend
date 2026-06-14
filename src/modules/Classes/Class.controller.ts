@@ -37,7 +37,14 @@ export class ClassController {
 
       if (!teacherId) throw new HttpException("Usuário não autenticado", 401);
 
-      const classes = await this._classService.findAllByTeacher(teacherId);
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
+
+      const classes = await this._classService.findAllByTeacher(
+        teacherId,
+        page,
+        limit,
+      );
 
       return res.status(200).json(classes);
     } catch (error) {

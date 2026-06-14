@@ -44,6 +44,7 @@ describe("ExamService", () => {
       delete: vi.fn(),
       findByIdAndTeacher: vi.fn(),
       findByClassId: vi.fn(),
+      findByClassIdPaginated: vi.fn(),
     };
 
     classRepoMock = {
@@ -216,22 +217,43 @@ describe("ExamService", () => {
   });
 
   describe("getExamsByClass", () => {
-    it("deve listar exames de uma turma", async () => {
+    it("deve listar exames paginados de uma turma", async () => {
       vi.mocked(classRepoMock.findById!).mockResolvedValue(mockClass as any);
-      vi.mocked(examRepoMock.findByClassId!).mockResolvedValue([mockExam] as any);
+      vi.mocked(examRepoMock.findByClassIdPaginated!).mockResolvedValue({
+        data: [mockExam] as any,
+        totalItems: 1,
+      });
 
-      const result = await service.getExamsByClass("class-1", "teacher-1");
+      const result = await service.getExamsByClass("class-1", "teacher-1", 1, 10);
 
       expect(classRepoMock.findById).toHaveBeenCalledWith("class-1");
-      expect(examRepoMock.findByClassId).toHaveBeenCalledWith("class-1");
-      expect(result).toHaveLength(1);
+      expect(examRepoMock.findByClassIdPaginated).toHaveBeenCalledWith("class-1", 1, 10);
+      expect(result).toEqual({
+        data: [mockExam],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      });
+    });
+
+    it("deve calcular totalPages corretamente", async () => {
+      vi.mocked(classRepoMock.findById!).mockResolvedValue(mockClass as any);
+      vi.mocked(examRepoMock.findByClassIdPaginated!).mockResolvedValue({
+        data: [] as any,
+        totalItems: 0,
+      });
+
+      const result = await service.getExamsByClass("class-1", "teacher-1", 1, 10);
+
+      expect(result.totalItems).toBe(0);
+      expect(result.totalPages).toBe(0);
     });
 
     it("deve lançar HttpException 404 se turma não existir", async () => {
       vi.mocked(classRepoMock.findById!).mockResolvedValue(null);
 
       await expect(
-        service.getExamsByClass("not-found", "teacher-1"),
+        service.getExamsByClass("not-found", "teacher-1", 1, 10),
       ).rejects.toMatchObject({ statusCode: 404 });
     });
 
@@ -240,7 +262,7 @@ describe("ExamService", () => {
       vi.mocked(classRepoMock.findById!).mockResolvedValue(otherClass as any);
 
       await expect(
-        service.getExamsByClass("class-1", "teacher-1"),
+        service.getExamsByClass("class-1", "teacher-1", 1, 10),
       ).rejects.toMatchObject({ statusCode: 403 });
     });
   });

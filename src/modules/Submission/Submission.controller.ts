@@ -51,9 +51,15 @@ export class SubmissionController {
       const { examId } = req.query as {
         examId: string;
       };
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
 
       const submissions =
-        await this._submissionService.getSubmissionsByExam(examId);
+        await this._submissionService.getSubmissionsByExamPaginated(
+          examId,
+          page,
+          limit,
+        );
 
       return res.status(200).json(submissions);
     } catch (error) {
@@ -68,10 +74,15 @@ export class SubmissionController {
   ) => {
     try {
       const { classId } = req.params;
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
 
-      const submissions = await this._submissionService.getSubmissionsByClass(
-        classId as string,
-      );
+      const submissions =
+        await this._submissionService.getSubmissionsByClassPaginated(
+          classId as string,
+          page,
+          limit,
+        );
 
       return res.status(200).json(submissions);
     } catch (error) {

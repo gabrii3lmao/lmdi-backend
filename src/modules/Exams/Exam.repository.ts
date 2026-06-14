@@ -26,4 +26,17 @@ export class ExamRepository {
   async findByClassId(classId: string) {
     return await Exam.find({ classId });
   }
+
+  async findByClassIdPaginated(
+    classId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: IExam[]; totalItems: number }> {
+    const skip = (page - 1) * limit;
+    const [data, totalItems] = await Promise.all([
+      Exam.find({ classId }).skip(skip).limit(limit),
+      Exam.countDocuments({ classId }),
+    ]);
+    return { data, totalItems };
+  }
 }

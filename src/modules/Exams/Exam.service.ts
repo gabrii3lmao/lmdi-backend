@@ -6,6 +6,7 @@ import { SubmissionRepository } from "../Submission/Submission.repository.js";
 import { HttpException } from "../../config/errorHandler.js";
 import { SubmissionService } from "../Submission/Submission.service.js";
 import { gradeExam } from "../Submission/Grade.service.js";
+import type { PaginatedResponse } from "../common/dto/pagination.dto.js";
 
 export class ExamService {
   constructor(
@@ -97,7 +98,12 @@ export class ExamService {
     await this._examRepository.delete(examId);
   }
 
-  async getExamsByClass(classId: string, teacherId: string): Promise<IExam[]> {
+  async getExamsByClass(
+    classId: string,
+    teacherId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<IExam>> {
     const classExist = await this._classRepository.findById(classId);
 
     if (!classExist) {
@@ -105,10 +111,16 @@ export class ExamService {
     }
 
     if (classExist.teacherId.toString() !== teacherId) {
-      console.log("Falhou aqui");
       throw new HttpException("Não autorizado", 403);
     }
-    return await this._examRepository.findByClassId(classId);
+    const { data, totalItems } =
+      await this._examRepository.findByClassIdPaginated(classId, page, limit);
+    return {
+      data,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+    };
   }
 
   async deleteCascadeByExamId(

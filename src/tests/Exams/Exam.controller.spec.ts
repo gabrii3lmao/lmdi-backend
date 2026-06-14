@@ -112,15 +112,26 @@ describe("ExamController", () => {
   });
 
   describe("listByClass", () => {
-    it("deve listar exames por turma e retornar 200", async () => {
+    it("deve listar exames paginados por turma e retornar 200", async () => {
       req.params = { classId: "class-1" };
-      vi.mocked(mockService.getExamsByClass!).mockResolvedValue([{ _id: "exam-1" }] as any);
+      req.query = { page: "1", limit: "10" };
+      vi.mocked(mockService.getExamsByClass!).mockResolvedValue({
+        data: [{ _id: "exam-1" }],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      } as any);
 
       await controller.listByClass(req as Request, res as Response, next as NextFunction);
 
-      expect(mockService.getExamsByClass).toHaveBeenCalledWith("class-1", "teacher-1");
+      expect(mockService.getExamsByClass).toHaveBeenCalledWith("class-1", "teacher-1", 1, 10);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith([{ _id: "exam-1" }]);
+      expect(res.json).toHaveBeenCalledWith({
+        data: [{ _id: "exam-1" }],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      });
     });
   });
 });

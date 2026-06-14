@@ -12,6 +12,7 @@ import {
   classIdParamsSchema,
   examIdQuerySchema,
 } from "./dto/submission.dto.js";
+import { paginationQuerySchema } from "../common/dto/pagination.dto.js";
 
 const submissionRouter = Router();
 const examRepo = new ExamRepository();
@@ -31,12 +32,14 @@ submissionRouter.post(
 submissionRouter.get(
   "/",
   validate(examIdQuerySchema, "query"),
+  validate(paginationQuerySchema, "query"),
   submissionController.getAllSubmissions,
 );
 
 submissionRouter.get(
   "/class/:classId",
   validate(classIdParamsSchema, "params"),
+  validate(paginationQuerySchema, "query"),
   submissionController.getSubmissionsByClass,
 );
 

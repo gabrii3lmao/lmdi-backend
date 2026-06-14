@@ -23,6 +23,8 @@ describe("SubmissionService", () => {
       create: vi.fn(),
       findByClass: vi.fn(),
       findByExamId: vi.fn(),
+      findByExamIdPaginated: vi.fn(),
+      findByClassPaginated: vi.fn(),
       getSubmissionsAnswersById: vi.fn(),
       findById: vi.fn(),
       update: vi.fn(),
@@ -126,7 +128,7 @@ describe("SubmissionService", () => {
     });
   });
 
-  describe("getSubmissionsByExam", () => {
+  describe("getSubmissionsByExam (non-paginated)", () => {
     it("deve retornar submissões por examId", async () => {
       vi.mocked(subRepoMock.findByExamId!).mockResolvedValue([{ _id: "sub-1" }] as any);
 
@@ -137,7 +139,41 @@ describe("SubmissionService", () => {
     });
   });
 
-  describe("getSubmissionsByClass", () => {
+  describe("getSubmissionsByExamPaginated", () => {
+    it("deve retornar submissões paginadas por examId", async () => {
+      vi.mocked(subRepoMock.findByExamIdPaginated!).mockResolvedValue({
+        data: [{ _id: "sub-1" }] as any,
+        totalItems: 1,
+      });
+
+      const result = await service.getSubmissionsByExamPaginated("exam-1", 1, 10);
+
+      expect(subRepoMock.findByExamIdPaginated).toHaveBeenCalledWith("exam-1", 1, 10);
+      expect(result).toEqual({
+        data: [{ _id: "sub-1" }],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      });
+    });
+
+    it("deve calcular totalPages corretamente para múltiplas páginas", async () => {
+      const manySubs = Array.from({ length: 25 }, (_, i) => ({ _id: `sub-${i + 1}` }));
+      vi.mocked(subRepoMock.findByExamIdPaginated!).mockResolvedValue({
+        data: manySubs.slice(0, 10) as any,
+        totalItems: 25,
+      });
+
+      const result = await service.getSubmissionsByExamPaginated("exam-1", 2, 10);
+
+      expect(result.totalItems).toBe(25);
+      expect(result.totalPages).toBe(3);
+      expect(result.currentPage).toBe(2);
+      expect(result.data).toHaveLength(10);
+    });
+  });
+
+  describe("getSubmissionsByClass (non-paginated)", () => {
     it("deve retornar submissões por classId", async () => {
       vi.mocked(subRepoMock.findByClass!).mockResolvedValue([{ _id: "sub-1" }] as any);
 
@@ -145,6 +181,25 @@ describe("SubmissionService", () => {
 
       expect(subRepoMock.findByClass).toHaveBeenCalledWith("class-1");
       expect(result).toHaveLength(1);
+    });
+  });
+
+  describe("getSubmissionsByClassPaginated", () => {
+    it("deve retornar submissões paginadas por classId", async () => {
+      vi.mocked(subRepoMock.findByClassPaginated!).mockResolvedValue({
+        data: [{ _id: "sub-1" }] as any,
+        totalItems: 1,
+      });
+
+      const result = await service.getSubmissionsByClassPaginated("class-1", 1, 5);
+
+      expect(subRepoMock.findByClassPaginated).toHaveBeenCalledWith("class-1", 1, 5);
+      expect(result).toEqual({
+        data: [{ _id: "sub-1" }],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      });
     });
   });
 

@@ -88,9 +88,14 @@ export class ExamController {
         throw new HttpException("Não autenticado", 401);
       }
 
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
+
       const exams = await this._examService.getExamsByClass(
         classId as string,
         teacherId,
+        page,
+        limit,
       );
 
       return res.status(200).json(exams);

@@ -21,6 +21,7 @@ describe("ClassService", () => {
     classRepoMock = {
       create: vi.fn(),
       findAllByTeacher: vi.fn(),
+      findAllByTeacherPaginated: vi.fn(),
       findById: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -52,13 +53,43 @@ describe("ClassService", () => {
   });
 
   describe("findAllByTeacher", () => {
-    it("deve retornar todas as turmas de um professor", async () => {
-      vi.mocked(classRepoMock.findAllByTeacher!).mockResolvedValue([mockClass] as any);
+    it("deve retornar turmas paginadas de um professor", async () => {
+      vi.mocked(classRepoMock.findAllByTeacherPaginated!).mockResolvedValue({
+        data: [mockClass] as any,
+        totalItems: 1,
+      });
 
-      const result = await service.findAllByTeacher("teacher-1");
+      const result = await service.findAllByTeacher("teacher-1", 1, 10);
 
-      expect(classRepoMock.findAllByTeacher).toHaveBeenCalledWith("teacher-1");
-      expect(result).toHaveLength(1);
+      expect(classRepoMock.findAllByTeacherPaginated).toHaveBeenCalledWith(
+        "teacher-1",
+        1,
+        10,
+      );
+      expect(result).toEqual({
+        data: [mockClass],
+        totalItems: 1,
+        totalPages: 1,
+        currentPage: 1,
+      });
+    });
+
+    it("deve calcular totalPages corretamente", async () => {
+      const manyClasses = Array.from({ length: 25 }, (_, i) => ({
+        _id: `class-${i + 1}`,
+        name: `Turma ${i + 1}`,
+        teacherId: "teacher-1",
+      }));
+      vi.mocked(classRepoMock.findAllByTeacherPaginated!).mockResolvedValue({
+        data: manyClasses.slice(0, 10) as any,
+        totalItems: 25,
+      });
+
+      const result = await service.findAllByTeacher("teacher-1", 1, 10);
+
+      expect(result.totalItems).toBe(25);
+      expect(result.totalPages).toBe(3);
+      expect(result.data).toHaveLength(10);
     });
   });
 

@@ -6,6 +6,7 @@ import { ClassRepository } from "./Class.repository.js";
 import { SubmissionRepository } from "../Submission/Submission.repository.js";
 import { validate } from "../../middlewares/validationMiddleware.js";
 import { classValidationSchema } from "./dto/create-class.js";
+import { paginationQuerySchema } from "../common/dto/pagination.dto.js";
 
 const submissionRepository = new SubmissionRepository();
 const classRepository = new ClassRepository();
@@ -14,7 +15,12 @@ const classController = new ClassController(classService);
 
 const classRouter = Router();
 
-classRouter.get("/", authMiddleware, classController.getClasses);
+classRouter.get(
+  "/",
+  authMiddleware,
+  validate(paginationQuerySchema, "query"),
+  classController.getClasses,
+);
 classRouter.post(
   "/",
   authMiddleware,

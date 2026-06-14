@@ -9,6 +9,7 @@ import { ClassRepository } from "../Classes/Class.repository.js";
 import { SubmissionRepository } from "../Submission/Submission.repository.js";
 import { SubmissionService } from "../Submission/Submission.service.js";
 import { examValidationSchema } from "./dto/create-exam.js";
+import { paginationQuerySchema } from "../common/dto/pagination.dto.js";
 
 const examRouter = Router();
 
@@ -33,6 +34,10 @@ examRouter.put(
 
 examRouter.delete("/:examId", examController.delete);
 
-examRouter.get("/class/:classId", examController.listByClass);
+examRouter.get(
+  "/class/:classId",
+  validate(paginationQuerySchema, "query"),
+  examController.listByClass,
+);
 
 export default examRouter;
