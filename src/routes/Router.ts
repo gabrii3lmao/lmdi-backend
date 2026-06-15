@@ -7,6 +7,10 @@ import classRouter from "../modules/Classes/Class.routes.js";
 
 const router = express.Router();
 
+router.get("/ping", (req, res) => {
+    res.send("PONG");
+});
+
 router.use("/auth", authRouter);
 router.use("/exams", examRouter);
 router.use("/submissions", submissionRouter);
