@@ -170,4 +170,24 @@ export class UserService {
       },
     };
   }
+
+  async getProfile(userId: string) {
+    const user = await this._userRepository.findById(userId);
+    if (!user) {
+      throw new HttpException("User not found", 404);
+    }
+    return {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+    };
+  }
+
+  async deleteUser(userId: string) {
+    const deletedUser = await this._userRepository.deleteById(userId);
+    if (!deletedUser) {
+      throw new HttpException("User not found", 404);
+    }
+    return deletedUser;
+  }
 }

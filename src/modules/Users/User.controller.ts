@@ -133,4 +133,34 @@ export class UserController {
         .json({ message: "Refresh token inválido ou expirado" });
     }
   };
+
+  getProfile = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.id;
+      const user = await this._userService.getProfile(userId);
+      return res.json(user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteAccount = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.id;
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      await this._userService.deleteUser(userId);
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      });
+      return res.json({ message: "Conta deletada com sucesso" });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

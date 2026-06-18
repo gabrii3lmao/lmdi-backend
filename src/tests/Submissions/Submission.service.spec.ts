@@ -90,6 +90,7 @@ describe("SubmissionService", () => {
       expect(subRepoMock.create).toHaveBeenNthCalledWith(1, {
         examId: "exam-1",
         classId: "class-1",
+        userId: "teacher-1",
         studentName: "Maria",
         imageUrl: "/upload/e_grayscale,e_contrast:100/prova.jpg",
         status: "pending",
@@ -97,6 +98,7 @@ describe("SubmissionService", () => {
       expect(subRepoMock.create).toHaveBeenNthCalledWith(2, {
         examId: "exam-1",
         classId: "class-1",
+        userId: "teacher-1",
         studentName: "João",
         imageUrl: "/upload/e_grayscale,e_contrast:100/prova2.jpg",
         status: "pending",

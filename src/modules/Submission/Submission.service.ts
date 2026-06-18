@@ -33,6 +33,7 @@ export class SubmissionService {
         this._submissionRepo.create({
           examId,
           classId: exam.classId,
+          userId: teacherId,
           studentName: file.originalname.split(".")[0],
           imageUrl: processedFilePaths[index],
           status: "pending",

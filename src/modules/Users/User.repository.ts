@@ -47,4 +47,9 @@ export class UserRepository {
       { returnDocument: "after" },
     );
   }
+
+  async deleteById(id: string) {
+    const deletedUser = await User.findByIdAndDelete(id);
+    return deletedUser;
+  }
 }

@@ -1,0 +1,13 @@
+import jwt from "jsonwebtoken";
+export default function generateToken(payload) {
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
+    const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+    return { accessToken, refreshToken };
+}
+export function verifyRefreshToken(token) {
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+}
+export function verifyAccessToken(token) {
+    return jwt.verify(token, process.env.JWT_SECRET);
+}
+//# sourceMappingURL=jwtService.js.map

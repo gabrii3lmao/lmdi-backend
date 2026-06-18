@@ -16,6 +16,12 @@ authRouter.post("/signin", userController.login);
 authRouter.post("/signout", authMiddleware, userController.logout);
 authRouter.post("/refresh-token", userController.refreshToken);
 authRouter.post("/google", userController.googleLogin);
+authRouter.get("/me", authMiddleware, userController.getProfile);
+authRouter.delete(
+  "/delete-account",
+  authMiddleware,
+  userController.deleteAccount,
+);
 
 authRouter.post("/forgot-password", userController.forgotPassword);
 authRouter.post("/reset-password/:token", userController.resetPassword);
