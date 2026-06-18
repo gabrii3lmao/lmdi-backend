@@ -20,7 +20,7 @@ export interface ProcessSubmissionJob {
 }
 
 export const submissionQueue = new Queue("process-submissions", {
-  connection: redisConnection,
+  connection: redisConnection as any,
 });
 
 const submissionRepo = new SubmissionRepository();
@@ -47,7 +47,7 @@ const worker = new Worker(
     }
   },
   {
-    connection: redisConnection,
+    connection: redisConnection as any,
     concurrency: 2,
   },
 );

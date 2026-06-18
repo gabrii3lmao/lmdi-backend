@@ -9,5 +9,5 @@ export const connection = new Redis(
 connection.on("error", () => {});
 
 export const emaillQueue = new Queue("email-queue", {
-  connection,
+  connection: connection as any,
 });

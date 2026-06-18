@@ -13,7 +13,7 @@ export const emailWorker = new Worker(
       await emailService.sendPasswordResetEmail(to, token);
     }
   },
-  { connection },
+  { connection: connection as any },
 );
 
 emailWorker.on("failed", (job, err) => {
