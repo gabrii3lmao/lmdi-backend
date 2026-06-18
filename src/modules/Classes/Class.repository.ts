@@ -41,4 +41,8 @@ export class ClassRepository {
     await Exam.deleteMany({ classId });
     return await Class.findByIdAndDelete(classId);
   }
+
+  async deleteManyByUserId(userId: string) {
+    await Class.deleteMany({ teacherId: userId });
+  }
 }

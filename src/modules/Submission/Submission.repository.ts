@@ -76,4 +76,8 @@ export class SubmissionRepository {
       returnDocument: "after",
     });
   }
+
+  async deleteManyByUserId(userId: string) {
+    return await Submission.deleteMany({ userId });
+  }
 }

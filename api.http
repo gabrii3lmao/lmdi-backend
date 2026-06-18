@@ -1,0 +1,189 @@
+### ==========================================
+### LetMeDoIt API — Test Requests
+### ==========================================
+### Prerequisites: REST Client extension for VS Code
+### Set base URL, tokens, and IDs as needed.
+### ==========================================
+
+@baseUrl = http://localhost:3000/api
+@accessToken = <your-access-token-here>
+@refreshTokenCookie = refreshToken=<your-refresh-token-here>
+@classId = <class-object-id>
+@examId = <exam-object-id>
+@submissionId = <submission-object-id>
+
+### ==========================================
+### Health Check
+### ==========================================
+
+### GET /api/ping
+GET {{baseUrl}}/ping
+
+### ==========================================
+### Auth — No auth required
+### ==========================================
+
+### POST /api/auth/signup
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Professor Teste",
+  "email": "professor@teste.com",
+  "password": "123456"
+}
+
+### POST /api/auth/signin
+POST {{baseUrl}}/auth/signin
+Content-Type: application/json
+
+{
+  "email": "professor@teste.com",
+  "password": "123456"
+}
+
+### POST /api/auth/refresh-token
+POST {{baseUrl}}/auth/refresh-token
+Cookie: {{refreshTokenCookie}}
+
+### POST /api/auth/google
+POST {{baseUrl}}/auth/google
+Content-Type: application/json
+
+{
+  "credential": "<google-id-token>"
+}
+
+### POST /api/auth/forgot-password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "professor@teste.com"
+}
+
+### POST /api/auth/reset-password/:token
+POST {{baseUrl}}/auth/reset-password/<reset-token>
+Content-Type: application/json
+
+{
+  "password": "novaSenha123"
+}
+
+### ==========================================
+### Auth — Requires authentication
+### ==========================================
+
+### POST /api/auth/signout
+POST {{baseUrl}}/auth/signout
+Authorization: Bearer {{accessToken}}
+Cookie: {{refreshTokenCookie}}
+
+### GET /api/auth/me
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### DELETE /api/auth/delete-account
+DELETE {{baseUrl}}/auth/delete-account
+Authorization: Bearer {{accessToken}}
+Cookie: {{refreshTokenCookie}}
+
+### ==========================================
+### Classes — Requires authentication
+### ==========================================
+
+### POST /api/classes — Create class
+POST {{baseUrl}}/classes/
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "3ª Série A - Matemática"
+}
+
+### GET /api/classes — List classes (paginated)
+GET {{baseUrl}}/classes/?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
+### PUT /api/classes/:id — Update class
+PUT {{baseUrl}}/classes/{{classId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "3ª Série A - Matemática (Atualizada)"
+}
+
+### DELETE /api/classes/:id — Delete class (cascade)
+DELETE {{baseUrl}}/classes/{{classId}}
+Authorization: Bearer {{accessToken}}
+
+### ==========================================
+### Exams — All routes require authentication
+### ==========================================
+
+### POST /api/exams/ — Create exam
+POST {{baseUrl}}/exams/
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Prova 1 - Trigonometria",
+  "classId": "{{classId}}",
+  "questionsCount": 5,
+  "choicesCount": 5,
+  "answerKey": ["A", "B", "C", "D", "E"]
+}
+
+### GET /api/exams/class/:classId — List exams by class (paginated)
+GET {{baseUrl}}/exams/class/{{classId}}?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
+### PUT /api/exams/:examId — Update exam (re-grades submissions)
+PUT {{baseUrl}}/exams/{{examId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Prova 1 - Trigonometria (Revisada)",
+  "classId": "{{classId}}",
+  "questionsCount": 5,
+  "choicesCount": 5,
+  "answerKey": ["A", "C", "B", "D", "E"]
+}
+
+### DELETE /api/exams/:examId — Delete exam (cascade submissions)
+DELETE {{baseUrl}}/exams/{{examId}}
+Authorization: Bearer {{accessToken}}
+
+### ==========================================
+### Submissions — All routes require authentication
+### ==========================================
+
+### POST /api/submissions/ — Upload answer sheets
+POST {{baseUrl}}/submissions/
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----boundary
+
+------boundary
+Content-Disposition: form-data; name="files"; filename="Joao_01.png"
+Content-Type: image/png
+
+< ./teste.png
+------boundary
+Content-Disposition: form-data; name="examId"
+
+{{examId}}
+------boundary--
+
+### GET /api/submissions/ — List submissions by exam (paginated)
+GET {{baseUrl}}/submissions/?examId={{examId}}&page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
+### GET /api/submissions/class/:classId — List submissions by class (paginated)
+GET {{baseUrl}}/submissions/class/{{classId}}?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+
+### GET /api/submissions/:submissionId/answers — Get submission answers
+GET {{baseUrl}}/submissions/{{submissionId}}/answers
+Authorization: Bearer {{accessToken}}

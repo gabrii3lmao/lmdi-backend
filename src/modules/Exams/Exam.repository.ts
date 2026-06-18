@@ -9,7 +9,9 @@ export class ExamRepository {
     examId: string,
     updateData: Partial<IExam>,
   ): Promise<IExam | null> {
-    return await Exam.findByIdAndUpdate(examId, updateData, { returnDocument: "after" });
+    return await Exam.findByIdAndUpdate(examId, updateData, {
+      returnDocument: "after",
+    });
   }
 
   async delete(examId: string): Promise<void> {
@@ -38,5 +40,9 @@ export class ExamRepository {
       Exam.countDocuments({ classId }),
     ]);
     return { data, totalItems };
+  }
+
+  async deleteManyByUserId(userId: string) {
+    await Exam.deleteMany({ teacherId: userId });
   }
 }

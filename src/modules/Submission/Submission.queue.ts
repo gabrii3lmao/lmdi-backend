@@ -9,6 +9,8 @@ const redisConnection = new Redis(
   { maxRetriesPerRequest: null },
 );
 
+redisConnection.on("error", () => {});
+
 export interface ProcessSubmissionJob {
   submissionId: string;
   examId: string;

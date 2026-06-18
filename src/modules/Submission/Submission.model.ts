@@ -9,6 +9,7 @@ interface ISubmissionDetail {
 
 export interface ISubmission extends Document {
   examId: Schema.Types.ObjectId | string;
+  userId: Schema.Types.ObjectId | string;
   studentName: string;
   classId: Schema.Types.ObjectId | string;
   imageUrl: string;
@@ -20,6 +21,7 @@ export interface ISubmission extends Document {
 
 const submissionSchema = new mongoose.Schema<ISubmission>(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     examId: { type: Schema.Types.ObjectId, ref: "Exam", required: true },
     classId: { type: Schema.Types.ObjectId, ref: "Class", required: true },
     studentName: { type: String, required: true },

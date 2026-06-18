@@ -2,17 +2,24 @@ import generateToken, { verifyRefreshToken } from "../../config/jwtService.js";
 import type { LoginUserType, RegisterUserType } from "./dto/userTypes.js";
 import { UserRepository } from "./User.repository.js";
 import crypto from "crypto";
-import { EmailService } from "./Email.service.js";
 import { emaillQueue } from "./Email.queue.js";
 import { HttpException } from "../../config/errorHandler.js";
 import { OAuth2Client } from "google-auth-library";
+import { DeleteUserDataService } from "./DeleteUserDataService.js";
+
+
+const deleteUserDataService = new DeleteUserDataService(
+  new UserRepository(),
+  new (await import("../Classes/Class.repository.js")).ClassRepository(),
+  new (await import("../Submission/Submission.repository.js")).SubmissionRepository(),
+  new (await import("../Exams/Exam.repository.js")).ExamRepository(),
+);
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export class UserService {
   constructor(
     private readonly _userRepository: UserRepository,
-    private readonly _emailService: EmailService,
   ) {}
 
   async register(userData: RegisterUserType) {
@@ -184,10 +191,11 @@ export class UserService {
   }
 
   async deleteUser(userId: string) {
-    const deletedUser = await this._userRepository.deleteById(userId);
-    if (!deletedUser) {
+    const user = await this._userRepository.findById(userId);
+    if (!user) {
       throw new HttpException("User not found", 404);
     }
-    return deletedUser;
+
+    await deleteUserDataService.execute(userId);
   }
 }

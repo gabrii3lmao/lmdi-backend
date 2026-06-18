@@ -6,6 +6,8 @@ export const connection = new Redis(
   { maxRetriesPerRequest: null },
 );
 
+connection.on("error", () => {});
+
 export const emaillQueue = new Queue("email-queue", {
   connection,
 });
