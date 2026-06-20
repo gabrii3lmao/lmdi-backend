@@ -24,5 +24,9 @@ export const examIdQuerySchema = z.object({
   examId: z.string().regex(/^[0-9a-fA-F]{24}$/),
 });
 
+export const examIdParamsSchema = z.object({
+  examId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+});
+
 export type CreateSubmissionDTO = z.infer<typeof createSubmissionSchema>;
 export type SubmissionItem = CreateSubmissionDTO["submissions"][number];

@@ -10,6 +10,7 @@ import {
   submissionIdParamsSchema,
   classIdParamsSchema,
   examIdQuerySchema,
+  examIdParamsSchema,
 } from "./dto/submission.dto.js";
 import { paginationQuerySchema } from "../common/dto/pagination.dto.js";
 
@@ -50,6 +51,18 @@ submissionRouter.get(
   "/:submissionId/answers",
   validate(submissionIdParamsSchema, "params"),
   submissionController.getSubmissionAnswers,
+);
+
+submissionRouter.get(
+  "/:examId/export",
+  validate(examIdParamsSchema, "params"),
+  submissionController.exportReport,
+);
+
+submissionRouter.get(
+  "/:examId/analytics",
+  validate(examIdParamsSchema, "params"),
+  submissionController.getAnalytics,
 );
 
 export default submissionRouter;

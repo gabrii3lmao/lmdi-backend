@@ -1,4 +1,3 @@
-// Submission/Template.service.ts
 import "dotenv/config";
 import { GoogleGenAI } from "@google/genai";
 
@@ -14,7 +13,6 @@ function extrairJSONSeguro(texto: string): string {
   return match[0];
 }
 
-// Alterado para receber apenas UMA url e não mais um array
 export async function processarGabaritoUnico(
   url: string,
 ): Promise<Record<string, string | null>> {

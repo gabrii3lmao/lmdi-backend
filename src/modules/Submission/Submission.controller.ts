@@ -125,4 +125,60 @@ export class SubmissionController {
       next(error);
     }
   };
+
+  exportReport = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const teacherId = req.user?.id;
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
+      const examId = req.params.examId as string;
+
+      const buffer = await this._submissionService.generateExcelReport(
+        examId,
+        teacherId,
+      );
+
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      );
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="relatorio_${examId}.xlsx"`,
+      );
+      res.send(buffer);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getAnalytics = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const teacherId = req.user?.id;
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
+      const examId = req.params.examId as string;
+
+      const analytics = await this._submissionService.getExamAnalytics(
+        examId,
+        teacherId,
+      );
+
+      return res.status(200).json(analytics);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

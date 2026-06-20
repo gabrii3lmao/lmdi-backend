@@ -18,6 +18,10 @@ export class SubmissionRepository {
     return await Submission.find({ examId });
   }
 
+  async findByExamIdWithDetails(examId: string) {
+    return await Submission.find({ examId }).lean();
+  }
+
   async findByExamIdPaginated(
     examId: string,
     page: number,
