@@ -1,1 +1,0 @@
-{"version":3,"file":"Grade.service.d.ts","sourceRoot":"","sources":["../../../src/modules/Submission/Grade.service.ts"],"names":[],"mappings":"AAAA,UAAU,aAAa;IACrB,YAAY,EAAE,MAAM,CAAC;IACrB,KAAK,EAAE,MAAM,CAAC;IACd,OAAO,EAAE,GAAG,EAAE,CAAC;CAChB;AAED,eAAO,MAAM,SAAS,GACpB,WAAW,MAAM,EAAE,EACnB,gBAAgB,MAAM,CAAC,MAAM,EAAE,MAAM,GAAG,IAAI,CAAC,EAC7C,gBAAgB,MAAM,KACrB,aAgCF,CAAC"}

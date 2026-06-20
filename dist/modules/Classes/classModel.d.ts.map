@@ -1,1 +1,0 @@
-{"version":3,"file":"classModel.d.ts","sourceRoot":"","sources":["../../../src/modules/Classes/classModel.ts"],"names":[],"mappings":"AAAA,OAAO,QAAQ,EAAE,EAAE,QAAQ,EAAE,MAAM,EAAE,MAAM,UAAU,CAAC;AAEtD,MAAM,WAAW,MAAO,SAAQ,QAAQ;IACtC,IAAI,EAAE,MAAM,CAAC;IACb,SAAS,EAAE,MAAM,GAAG,MAAM,CAAC,KAAK,CAAC,QAAQ,CAAC;CAC3C;AAUD,QAAA,MAAM,KAAK;;;;;;eAA+C,CAAC;AAE3D,eAAe,KAAK,CAAC"}
