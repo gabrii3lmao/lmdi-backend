@@ -3,7 +3,9 @@ import { UserRepository } from "./User.repository.js";
 export declare class UserService {
     private readonly _userRepository;
     constructor(_userRepository: UserRepository);
-    register(userData: RegisterUserType): Promise<import("./userModel.js").IUser>;
+    register(userData: RegisterUserType): Promise<{
+        message: string;
+    }>;
     login(userData: LoginUserType): Promise<{
         accessToken: string;
         refreshToken: string;
@@ -11,8 +13,11 @@ export declare class UserService {
             id: import("mongoose").Types.ObjectId;
             name: string;
             email: string;
+            isVerified: boolean;
         };
     }>;
+    sendVerificationEmail(email: string): Promise<void>;
+    verifyEmail(token: string): Promise<void>;
     forgotPassword(email: string): Promise<void>;
     resetPassword(token: string, newPassword: string): Promise<import("mongoose").Document<unknown, {}, import("./userModel.js").IUser, {}, import("mongoose").DefaultSchemaOptions> & import("./userModel.js").IUser & Required<{
         _id: import("mongoose").Types.ObjectId;
@@ -32,6 +37,7 @@ export declare class UserService {
             id: import("mongoose").Types.ObjectId;
             name: string;
             email: string;
+            isVerified: boolean;
         };
     }>;
     getProfile(userId: string): Promise<{

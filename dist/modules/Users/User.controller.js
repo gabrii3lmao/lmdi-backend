@@ -47,6 +47,29 @@ export class UserController {
         });
         return res.json({ message: "Logout realizado com sucesso" });
     };
+    verifyEmail = async (req, res, next) => {
+        try {
+            const { token } = req.params;
+            await this._userService.verifyEmail(token);
+            return res.status(200).json({ message: "Email verificado com sucesso!" });
+        }
+        catch (error) {
+            next(error);
+        }
+    };
+    resendVerification = async (req, res, next) => {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return res.status(400).json({ message: "Email é obrigatório" });
+            }
+            await this._userService.sendVerificationEmail(email);
+            return res.status(200).json({ message: "Email de verificação reenviado!" });
+        }
+        catch (error) {
+            next(error);
+        }
+    };
     forgotPassword = async (req, res, next) => {
         try {
             const { email } = req.body;

@@ -56,7 +56,7 @@ describe("UserController", () => {
             const loginResult = {
                 accessToken: "at-123",
                 refreshToken: "rt-123",
-                user: { id: "user-1", name: "Prof", email: "prof@test.com" },
+                user: { id: "user-1", name: "Prof", email: "prof@test.com", isVerified: true },
             };
             vi.mocked(mockService.login).mockResolvedValue(loginResult);
             await controller.login(req, res, next);

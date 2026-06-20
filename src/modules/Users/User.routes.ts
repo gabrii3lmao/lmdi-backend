@@ -21,6 +21,10 @@ authRouter.delete(
   userController.deleteAccount,
 );
 
+authRouter.get("/verify-email/:token", userController.verifyEmail);
+
+authRouter.post("/resend-verification", userController.resendVerification);
+
 authRouter.post("/forgot-password", userController.forgotPassword);
 authRouter.post("/reset-password/:token", userController.resetPassword);
 

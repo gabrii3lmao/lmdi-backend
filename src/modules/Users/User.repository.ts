@@ -52,4 +52,30 @@ export class UserRepository {
     const deletedUser = await User.findByIdAndDelete(id);
     return deletedUser;
   }
+
+  async findByEmailVerificationToken(token: string): Promise<IUser | null> {
+    return await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: new Date() },
+    });
+  }
+
+  async markAsVerified(userId: string): Promise<void> {
+    await User.findByIdAndUpdate(userId, {
+      isVerified: true,
+      $unset: { emailVerificationToken: "", emailVerificationExpires: "" },
+    });
+  }
+
+  async setVerificationToken(
+    email: string,
+    token: string,
+    expires: Date,
+  ): Promise<IUser | null> {
+    return await User.findOneAndUpdate(
+      { email },
+      { emailVerificationToken: token, emailVerificationExpires: expires },
+      { new: true },
+    );
+  }
 }

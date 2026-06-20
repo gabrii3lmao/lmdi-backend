@@ -32,5 +32,8 @@ export declare class UserRepository {
     } & {
         id: string;
     }) | null>;
+    findByEmailVerificationToken(token: string): Promise<IUser | null>;
+    markAsVerified(userId: string): Promise<void>;
+    setVerificationToken(email: string, token: string, expires: Date): Promise<IUser | null>;
 }
 //# sourceMappingURL=User.repository.d.ts.map

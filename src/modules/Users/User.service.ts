@@ -29,7 +29,25 @@ export class UserService {
       throw new HttpException("Email already in use", 400);
     }
 
-    return await this._userRepository.create(userData);
+    const user = await this._userRepository.create(userData);
+
+    const token = crypto.randomBytes(20).toString("hex");
+    const expires = new Date(Date.now() + 3600000);
+
+    await this._userRepository.setVerificationToken(user.email, token, expires);
+
+    await emaillQueue.add(
+      "sendVerificationEmail",
+      { to: user.email, token },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 60000 },
+      },
+    );
+
+    return {
+      message: "Conta criada! Verifique seu email antes de fazer login.",
+    };
   }
 
   async login(userData: LoginUserType) {
@@ -64,8 +82,43 @@ export class UserService {
         id: user._id,
         name: user.name,
         email: user.email,
+        isVerified: user.isVerified,
       },
     };
+  }
+
+  async sendVerificationEmail(email: string) {
+    const user = await this._userRepository.findByEmail(email);
+    if (!user) {
+      throw new HttpException("Email not found", 404);
+    }
+
+    if (user.isVerified) {
+      throw new HttpException("Email já verificado", 400);
+    }
+
+    const token = crypto.randomBytes(20).toString("hex");
+    const expires = new Date(Date.now() + 3600000);
+
+    await this._userRepository.setVerificationToken(email, token, expires);
+
+    await emaillQueue.add(
+      "sendVerificationEmail",
+      { to: user.email, token },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 60000 },
+      },
+    );
+  }
+
+  async verifyEmail(token: string) {
+    const user = await this._userRepository.findByEmailVerificationToken(token);
+    if (!user) {
+      throw new HttpException("Token inválido ou expirado", 400);
+    }
+
+    await this._userRepository.markAsVerified(user._id.toString());
   }
 
   async forgotPassword(email: string) {
@@ -153,8 +206,9 @@ export class UserService {
       user = await this._userRepository.create({
         email,
         name: firstName,
-        password: crypto.randomBytes(20).toString("hex"), // Senha aleatória para usuários do Google
-      });
+        password: crypto.randomBytes(20).toString("hex"),
+        isVerified: true,
+      } as any);
     }
 
     const { accessToken, refreshToken } = generateToken({
@@ -174,6 +228,7 @@ export class UserService {
         id: user._id,
         name: user.name,
         email: user.email,
+        isVerified: true,
       },
     };
   }

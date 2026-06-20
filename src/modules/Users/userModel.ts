@@ -9,6 +9,9 @@ export interface IUser extends Document {
   resetPasswordToken?: string | undefined;
   resetPasswordExpires?: Date | undefined | number;
   role: string | string[];
+  isVerified: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
   isValidPassword(password: string): Promise<boolean>;
 }
 
@@ -41,6 +44,9 @@ const userSchema = new mongoose.Schema<IUser>(
       type: Date,
     },
     role: { type: String, enum: ["admin", "teacher"], default: "teacher" },
+    isVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String },
+    emailVerificationExpires: { type: Date },
   },
   { timestamps: true },
 );

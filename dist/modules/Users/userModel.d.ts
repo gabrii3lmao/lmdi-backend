@@ -7,6 +7,9 @@ export interface IUser extends Document {
     resetPasswordToken?: string | undefined;
     resetPasswordExpires?: Date | undefined | number;
     role: string | string[];
+    isVerified: boolean;
+    emailVerificationToken?: string;
+    emailVerificationExpires?: Date;
     isValidPassword(password: string): Promise<boolean>;
 }
 declare const User: mongoose.Model<IUser, {}, {}, {}, mongoose.Document<unknown, {}, IUser, {}, mongoose.DefaultSchemaOptions> & IUser & Required<{

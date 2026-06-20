@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Queue } from "bullmq";
 export interface ProcessSubmissionJob {
     submissionId: string;

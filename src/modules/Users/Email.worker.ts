@@ -11,6 +11,9 @@ export const emailWorker = new Worker(
     if (job.name === "sendPasswordResetEmail") {
       const { to, token } = job.data;
       await emailService.sendPasswordResetEmail(to, token);
+    } else if (job.name === "sendVerificationEmail") {
+      const { to, token } = job.data;
+      await emailService.sendVerificationEmail(to, token);
     }
   },
   { connection: connection as any },

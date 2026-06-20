@@ -28,6 +28,9 @@ const userSchema = new mongoose.Schema({
         type: Date,
     },
     role: { type: String, enum: ["admin", "teacher"], default: "teacher" },
+    isVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String },
+    emailVerificationExpires: { type: Date },
 }, { timestamps: true });
 userSchema.pre("save", async function (next) {
     try {

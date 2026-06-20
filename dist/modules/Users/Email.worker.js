@@ -8,6 +8,10 @@ export const emailWorker = new Worker("email-queue", async (job) => {
         const { to, token } = job.data;
         await emailService.sendPasswordResetEmail(to, token);
     }
+    else if (job.name === "sendVerificationEmail") {
+        const { to, token } = job.data;
+        await emailService.sendVerificationEmail(to, token);
+    }
 }, { connection: connection });
 emailWorker.on("failed", (job, err) => {
     console.error(`Job ${job.id} failed with error:`, err);

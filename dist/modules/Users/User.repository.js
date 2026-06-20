@@ -34,5 +34,20 @@ export class UserRepository {
         const deletedUser = await User.findByIdAndDelete(id);
         return deletedUser;
     }
+    async findByEmailVerificationToken(token) {
+        return await User.findOne({
+            emailVerificationToken: token,
+            emailVerificationExpires: { $gt: new Date() },
+        });
+    }
+    async markAsVerified(userId) {
+        await User.findByIdAndUpdate(userId, {
+            isVerified: true,
+            $unset: { emailVerificationToken: "", emailVerificationExpires: "" },
+        });
+    }
+    async setVerificationToken(email, token, expires) {
+        return await User.findOneAndUpdate({ email }, { emailVerificationToken: token, emailVerificationExpires: expires }, { new: true });
+    }
 }
 //# sourceMappingURL=User.repository.js.map
