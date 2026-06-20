@@ -7,6 +7,7 @@ interface ISubmissionDetail {
 }
 export interface ISubmission extends Document {
     examId: Schema.Types.ObjectId | string;
+    userId: Schema.Types.ObjectId | string;
     studentName: string;
     classId: Schema.Types.ObjectId | string;
     imageUrl: string;

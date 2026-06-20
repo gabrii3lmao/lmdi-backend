@@ -4,6 +4,7 @@ import examRouter from "../modules/Exams/Exam.routes.js";
 import submissionRouter from "../modules/Submission/Submission.routes.js";
 import classRouter from "../modules/Classes/Class.routes.js";
 const router = express.Router();
+// health endpoint
 router.get("/ping", (req, res) => {
     res.send("PONG");
 });

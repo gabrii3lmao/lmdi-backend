@@ -38,26 +38,20 @@ describe("SubmissionService", () => {
   });
 
   describe("processSubmissions", () => {
-    const mockFiles = [
-      {
-        path: "/upload/prova.jpg",
-        originalname: "Maria.jpg",
-      },
-      {
-        path: "/upload/prova2.jpg",
-        originalname: "João.png",
-      },
-    ] as Express.Multer.File[];
+    const mockSubmissions = [
+      { studentName: "Maria", imageUrl: "https://res.cloudinary.com/demo/image/upload/prova.jpg" },
+      { studentName: "João", imageUrl: "https://res.cloudinary.com/demo/image/upload/prova2.jpg" },
+    ];
 
     it("deve lançar HttpException 404 se o exame não for encontrado", async () => {
       vi.mocked(examRepoMock.findByIdAndTeacher!).mockResolvedValue(null);
 
       await expect(
-        service.processSubmissions("exam-id", "teacher-id", mockFiles),
+        service.processSubmissions("exam-id", "teacher-id", mockSubmissions),
       ).rejects.toThrow(HttpException);
 
       await expect(
-        service.processSubmissions("exam-id", "teacher-id", mockFiles),
+        service.processSubmissions("exam-id", "teacher-id", mockSubmissions),
       ).rejects.toMatchObject({ statusCode: 404, message: "Gabarito não encontrado" });
     });
 
@@ -81,7 +75,7 @@ describe("SubmissionService", () => {
       const result = await service.processSubmissions(
         "exam-1",
         "teacher-1",
-        mockFiles,
+        mockSubmissions,
       );
 
       expect(examRepoMock.findByIdAndTeacher).toHaveBeenCalledWith("exam-1", "teacher-1");
@@ -92,7 +86,7 @@ describe("SubmissionService", () => {
         classId: "class-1",
         userId: "teacher-1",
         studentName: "Maria",
-        imageUrl: "/upload/e_grayscale,e_contrast:100/prova.jpg",
+        imageUrl: "https://res.cloudinary.com/demo/image/upload/e_grayscale,e_contrast:100/prova.jpg",
         status: "pending",
       });
       expect(subRepoMock.create).toHaveBeenNthCalledWith(2, {
@@ -100,7 +94,7 @@ describe("SubmissionService", () => {
         classId: "class-1",
         userId: "teacher-1",
         studentName: "João",
-        imageUrl: "/upload/e_grayscale,e_contrast:100/prova2.jpg",
+        imageUrl: "https://res.cloudinary.com/demo/image/upload/e_grayscale,e_contrast:100/prova2.jpg",
         status: "pending",
       });
 
@@ -111,7 +105,7 @@ describe("SubmissionService", () => {
           data: expect.objectContaining({
             submissionId: "sub-1",
             examId: "exam-1",
-            imageUrl: "/upload/prova.jpg",
+            imageUrl: "https://res.cloudinary.com/demo/image/upload/prova.jpg",
             answerKey: ["A", "B", "C"],
             questionsCount: 3,
           }),
@@ -121,7 +115,7 @@ describe("SubmissionService", () => {
           data: expect.objectContaining({
             submissionId: "sub-2",
             examId: "exam-1",
-            imageUrl: "/upload/prova2.jpg",
+            imageUrl: "https://res.cloudinary.com/demo/image/upload/prova2.jpg",
           }),
         }),
       ]);

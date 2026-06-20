@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Queue, Worker, Job } from "bullmq";
 import { Redis } from "ioredis";
 import { processarGabaritoUnico } from "./Template.service.js";

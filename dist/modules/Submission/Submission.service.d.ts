@@ -6,7 +6,10 @@ export declare class SubmissionService {
     private readonly _examRepo;
     private readonly _submissionRepo;
     constructor(_examRepo: ExamRepository, _submissionRepo: SubmissionRepository);
-    processSubmissions(examId: string, teacherId: string, files: Express.Multer.File[]): Promise<any[]>;
+    processSubmissions(examId: string, teacherId: string, submissions: {
+        studentName: string;
+        imageUrl: string;
+    }[]): Promise<any[]>;
     getSubmissionsByClass(classId: string): Promise<(import("mongoose").Document<unknown, {}, ISubmission, {}, import("mongoose").DefaultSchemaOptions> & ISubmission & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {

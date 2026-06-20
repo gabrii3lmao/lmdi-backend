@@ -10,5 +10,6 @@ export declare class ClassRepository {
     update(id: string, classData: Partial<IClass>): Promise<IClass | null>;
     delete(id: string): Promise<IClass | null>;
     deleteCascade(classId: string): Promise<IClass | null>;
+    deleteManyByUserId(userId: string): Promise<void>;
 }
 //# sourceMappingURL=Class.repository.d.ts.map

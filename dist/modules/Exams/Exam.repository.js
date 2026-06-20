@@ -4,7 +4,9 @@ export class ExamRepository {
         return await Exam.create(examData);
     }
     async update(examId, updateData) {
-        return await Exam.findByIdAndUpdate(examId, updateData, { returnDocument: "after" });
+        return await Exam.findByIdAndUpdate(examId, updateData, {
+            returnDocument: "after",
+        });
     }
     async delete(examId) {
         await Exam.findByIdAndDelete(examId);
@@ -25,6 +27,9 @@ export class ExamRepository {
             Exam.countDocuments({ classId }),
         ]);
         return { data, totalItems };
+    }
+    async deleteManyByUserId(userId) {
+        await Exam.deleteMany({ teacherId: userId });
     }
 }
 //# sourceMappingURL=Exam.repository.js.map

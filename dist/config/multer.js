@@ -1,29 +1,23 @@
 import { v2 as cloudinary } from "cloudinary";
-// @ts-ignore
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import multer from "multer";
 import "dotenv/config";
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: async (req, file) => {
-        return {
-            folder: "letmedoit_uploads", // Pasta no Cloudinary
-            allowed_formats: ["jpg", "png", "jpeg"], // O Cloudinary já barra o que não for isso
-            public_id: `${Date.now()}-${file.originalname.split(".")[0]}`,
-        };
-    },
-});
-export const upload = multer({
-    storage,
-    limits: {
-        fileSize: 5 * 1024 * 1024, // Limite de 5MB
-    },
-});
+export function generateUploadSignature() {
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = "letmedoit_uploads";
+    const params = { timestamp, folder };
+    const signature = cloudinary.utils.api_sign_request(params, process.env.CLOUDINARY_API_SECRET);
+    return {
+        signature,
+        timestamp,
+        apiKey: process.env.CLOUDINARY_API_KEY,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        folder,
+    };
+}
 export const deleteImage = async (publicId) => {
     try {
         await cloudinary.uploader.destroy(publicId);

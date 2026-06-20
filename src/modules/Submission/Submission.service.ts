@@ -14,7 +14,7 @@ export class SubmissionService {
   async processSubmissions(
     examId: string,
     teacherId: string,
-    files: Express.Multer.File[],
+    submissions: { studentName: string; imageUrl: string }[],
   ) {
     const exam = await this._examRepo.findByIdAndTeacher(examId, teacherId);
 
@@ -22,19 +22,17 @@ export class SubmissionService {
       throw new HttpException("Gabarito não encontrado", 404);
     }
 
-    const processedFilePaths = files.map((f) =>
-      f.path.replace("/upload/", "/upload/e_grayscale,e_contrast:100/"),
+    const processedFilePaths = submissions.map((s) =>
+      s.imageUrl.replace("/upload/", "/upload/e_grayscale,e_contrast:100/"),
     );
 
-    const filePaths = files.map((f) => f.path);
-
     const pendingSubmissions = await Promise.all(
-      files.map((file, index) =>
+      submissions.map((sub, index) =>
         this._submissionRepo.create({
           examId,
           classId: exam.classId,
           userId: teacherId,
-          studentName: file.originalname.split(".")[0],
+          studentName: sub.studentName,
           imageUrl: processedFilePaths[index],
           status: "pending",
         }),
@@ -46,7 +44,7 @@ export class SubmissionService {
       data: {
         submissionId: submission._id.toString(),
         examId,
-        imageUrl: filePaths[index],
+        imageUrl: submissions[index].imageUrl,
         answerKey: exam.answerKey,
         questionsCount: exam.questionsCount,
       },

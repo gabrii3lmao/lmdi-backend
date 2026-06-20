@@ -21,5 +21,6 @@ export declare class ExamRepository {
         data: IExam[];
         totalItems: number;
     }>;
+    deleteManyByUserId(userId: string): Promise<void>;
 }
 //# sourceMappingURL=Exam.repository.d.ts.map

@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { upload } from "../../config/multer.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
 import { validate } from "../../middlewares/validationMiddleware.js";
 import { SubmissionController } from "./Submission.controller.js";
@@ -22,9 +21,13 @@ const submissionController = new SubmissionController(submissionService);
 
 submissionRouter.use(authMiddleware);
 
+submissionRouter.get(
+  "/upload-signature",
+  submissionController.getUploadSignature,
+);
+
 submissionRouter.post(
   "/",
-  upload.array("files"),
   validate(createSubmissionSchema),
   submissionController.createSubmission,
 );

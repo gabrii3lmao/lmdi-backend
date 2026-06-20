@@ -22,7 +22,6 @@ describe("SubmissionController", () => {
             params: {},
             query: {},
             user: { id: "teacher-123" },
-            files: undefined,
         };
         res = {
             status: vi.fn().mockReturnThis(),
@@ -37,32 +36,35 @@ describe("SubmissionController", () => {
             expect(next).toHaveBeenCalledWith(expect.any(HttpException));
             expect(next.mock.calls[0][0].statusCode).toBe(401);
         });
-        it("deve chamar next com HttpException 400 se não houver arquivos", async () => {
-            req.body.examId = "exam-123";
-            req.files = [];
+        it("deve chamar next com HttpException 400 se não houver submissões", async () => {
+            req.body = { examId: "exam-123", submissions: [] };
             await controller.createSubmission(req, res, next);
             expect(next).toHaveBeenCalledWith(expect.any(HttpException));
             expect(next.mock.calls[0][0].statusCode).toBe(400);
         });
-        it("deve chamar next com HttpException 400 se files for undefined", async () => {
-            req.body.examId = "exam-123";
+        it("deve chamar next com HttpException 400 se submissions for undefined", async () => {
+            req.body = { examId: "exam-123" };
             await controller.createSubmission(req, res, next);
             expect(next).toHaveBeenCalledWith(expect.any(HttpException));
             expect(next.mock.calls[0][0].statusCode).toBe(400);
         });
         it("deve retornar 200 com resultados em caso de sucesso", async () => {
-            req.body.examId = "exam-123";
-            req.files = [{ path: "/img.jpg", originalname: "aluno.jpg" }];
+            const submissions = [
+                { studentName: "Aluno", imageUrl: "https://cloudinary.com/img.jpg" },
+            ];
+            req.body = { examId: "exam-123", submissions };
             const mockResult = [{ _id: "sub-1", status: "pending" }];
             vi.mocked(mockService.processSubmissions).mockResolvedValue(mockResult);
             await controller.createSubmission(req, res, next);
-            expect(mockService.processSubmissions).toHaveBeenCalledWith("exam-123", "teacher-123", req.files);
+            expect(mockService.processSubmissions).toHaveBeenCalledWith("exam-123", "teacher-123", submissions);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith(mockResult);
         });
         it("deve chamar next com erro se o service lançar exceção", async () => {
-            req.body.examId = "exam-123";
-            req.files = [{ path: "/img.jpg" }];
+            req.body = {
+                examId: "exam-123",
+                submissions: [{ studentName: "Aluno", imageUrl: "https://cloudinary.com/img.jpg" }],
+            };
             const error = new HttpException("Gabarito não encontrado", 404);
             vi.mocked(mockService.processSubmissions).mockRejectedValue(error);
             await controller.createSubmission(req, res, next);

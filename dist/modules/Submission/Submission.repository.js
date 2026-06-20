@@ -55,5 +55,8 @@ export class SubmissionRepository {
             returnDocument: "after",
         });
     }
+    async deleteManyByUserId(userId) {
+        return await Submission.deleteMany({ userId });
+    }
 }
 //# sourceMappingURL=Submission.repository.js.map

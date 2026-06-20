@@ -1,7 +1,4 @@
 import { v2 as cloudinary } from "cloudinary";
-// @ts-ignore
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import multer from "multer";
 import "dotenv/config";
 
 cloudinary.config({
@@ -10,24 +7,31 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+export interface UploadSignature {
+  signature: string;
+  timestamp: number;
+  apiKey: string;
+  cloudName: string;
+  folder: string;
+}
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, file) => {
-    return {
-      folder: "letmedoit_uploads", // Pasta no Cloudinary
-      allowed_formats: ["jpg", "png", "jpeg"], // O Cloudinary já barra o que não for isso
-      public_id: `${Date.now()}-${file.originalname.split(".")[0]}`,
-    };
-  },
-});
+export function generateUploadSignature(): UploadSignature {
+  const timestamp = Math.round(Date.now() / 1000);
+  const folder = "letmedoit_uploads";
+  const params: Record<string, string | number> = { timestamp, folder };
+  const signature = cloudinary.utils.api_sign_request(
+    params,
+    process.env.CLOUDINARY_API_SECRET!,
+  );
 
-export const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // Limite de 5MB
-  },
-});
+  return {
+    signature,
+    timestamp,
+    apiKey: process.env.CLOUDINARY_API_KEY!,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+    folder,
+  };
+}
 
 export const deleteImage = async (publicId: string): Promise<void> => {
   try {
@@ -36,4 +40,4 @@ export const deleteImage = async (publicId: string): Promise<void> => {
     console.error("Erro ao deletar imagem do Cloudinary:", error);
     throw new Error("Failed to delete image from Cloudinary");
   }
-}
+};

@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { SubmissionService } from "./Submission.service.js";
 import { HttpException } from "../../config/errorHandler.js";
+import { generateUploadSignature } from "../../config/multer.js";
 import type { CreateSubmissionDTO } from "./dto/submission.dto.js";
 
 interface AuthRequest extends Request {
@@ -9,6 +10,19 @@ interface AuthRequest extends Request {
 
 export class SubmissionController {
   constructor(private readonly _submissionService: SubmissionService) {}
+
+  getUploadSignature = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const signature = generateUploadSignature();
+      return res.status(200).json(signature);
+    } catch (error) {
+      next(error);
+    }
+  };
 
   createSubmission = async (
     req: AuthRequest,
@@ -22,18 +36,16 @@ export class SubmissionController {
         throw new HttpException("Não autenticado", 401);
       }
 
-      const files = req.files as Express.Multer.File[];
+      const { examId, submissions } = req.body as CreateSubmissionDTO;
 
-      if (!files?.length) {
+      if (!submissions?.length) {
         throw new HttpException("Nenhuma imagem enviada", 400);
       }
-
-      const { examId } = req.body as CreateSubmissionDTO;
 
       const results = await this._submissionService.processSubmissions(
         examId,
         teacherId,
-        files,
+        submissions,
       );
 
       return res.status(200).json(results);

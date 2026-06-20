@@ -47,5 +47,6 @@ export declare class SubmissionRepository {
     } & {
         id: string;
     }) | null>;
+    deleteManyByUserId(userId: string): Promise<import("mongodb").DeleteResult>;
 }
 //# sourceMappingURL=Submission.repository.d.ts.map

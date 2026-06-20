@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { upload } from "../../config/multer.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
 import { validate } from "../../middlewares/validationMiddleware.js";
 import { SubmissionController } from "./Submission.controller.js";
@@ -14,7 +13,8 @@ const submissionRepo = new SubmissionRepository();
 const submissionService = new SubmissionService(examRepo, submissionRepo);
 const submissionController = new SubmissionController(submissionService);
 submissionRouter.use(authMiddleware);
-submissionRouter.post("/", upload.array("files"), validate(createSubmissionSchema), submissionController.createSubmission);
+submissionRouter.get("/upload-signature", submissionController.getUploadSignature);
+submissionRouter.post("/", validate(createSubmissionSchema), submissionController.createSubmission);
 submissionRouter.get("/", validate(examIdQuerySchema, "query"), validate(paginationQuerySchema, "query"), submissionController.getAllSubmissions);
 submissionRouter.get("/class/:classId", validate(classIdParamsSchema, "params"), validate(paginationQuerySchema, "query"), submissionController.getSubmissionsByClass);
 submissionRouter.get("/:submissionId/answers", validate(submissionIdParamsSchema, "params"), submissionController.getSubmissionAnswers);

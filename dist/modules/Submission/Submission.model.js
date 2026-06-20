@@ -1,5 +1,6 @@
 import mongoose, { Schema, model, Document } from "mongoose";
 const submissionSchema = new mongoose.Schema({
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     examId: { type: Schema.Types.ObjectId, ref: "Exam", required: true },
     classId: { type: Schema.Types.ObjectId, ref: "Class", required: true },
     studentName: { type: String, required: true },

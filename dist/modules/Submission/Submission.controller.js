@@ -1,21 +1,30 @@
 import { HttpException } from "../../config/errorHandler.js";
+import { generateUploadSignature } from "../../config/multer.js";
 export class SubmissionController {
     _submissionService;
     constructor(_submissionService) {
         this._submissionService = _submissionService;
     }
+    getUploadSignature = async (_req, res, next) => {
+        try {
+            const signature = generateUploadSignature();
+            return res.status(200).json(signature);
+        }
+        catch (error) {
+            next(error);
+        }
+    };
     createSubmission = async (req, res, next) => {
         try {
             const teacherId = req.user?.id;
             if (!teacherId) {
                 throw new HttpException("Não autenticado", 401);
             }
-            const files = req.files;
-            if (!files?.length) {
+            const { examId, submissions } = req.body;
+            if (!submissions?.length) {
                 throw new HttpException("Nenhuma imagem enviada", 400);
             }
-            const { examId } = req.body;
-            const results = await this._submissionService.processSubmissions(examId, teacherId, files);
+            const results = await this._submissionService.processSubmissions(examId, teacherId, submissions);
             return res.status(200).json(results);
         }
         catch (error) {
