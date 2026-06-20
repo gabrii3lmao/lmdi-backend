@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { UserService } from "../../modules/Users/User.service.js";
 import type { UserRepository } from "../../modules/Users/User.repository.js";
-import type { EmailService } from "../../modules/Users/Email.service.js";
 import { HttpException } from "../../config/errorHandler.js";
 
 const { mockVerifyIdToken } = vi.hoisted(() => ({
@@ -28,7 +27,6 @@ vi.mock("../../config/jwtService.js", () => ({
 
 describe("UserService", () => {
   let userRepoMock: Partial<UserRepository>;
-  let emailServiceMock: Partial<EmailService>;
   let service: UserService;
 
   const mockUser = {
@@ -37,6 +35,7 @@ describe("UserService", () => {
     email: "prof@test.com",
     password: "hashed-password",
     refreshToken: null,
+    isVerified: false,
     isValidPassword: vi.fn(),
   };
 
@@ -52,17 +51,17 @@ describe("UserService", () => {
     userRepoMock = {
       create: vi.fn(),
       findByEmail: vi.fn(),
-      setPasswordResetToken: vi.fn(),
-      resetPasswordByToken: vi.fn(),
       findById: vi.fn(),
       updateRefreshToken: vi.fn(),
+      setPasswordResetToken: vi.fn(),
+      resetPasswordByToken: vi.fn(),
+      findByEmailVerificationToken: vi.fn(),
+      markAsVerified: vi.fn(),
+      setVerificationToken: vi.fn(),
     };
-
-    emailServiceMock = {};
 
     service = new UserService(
       userRepoMock as UserRepository,
-      emailServiceMock as EmailService,
     );
   });
 
@@ -73,15 +72,23 @@ describe("UserService", () => {
       password: "123456",
     };
 
-    it("deve registrar um novo usuário com sucesso", async () => {
+    it("deve registrar um novo usuário e retornar mensagem de verificação", async () => {
+      const createdUser = { ...mockUser, email: "novo@test.com" };
       vi.mocked(userRepoMock.findByEmail!).mockResolvedValue(null);
-      vi.mocked(userRepoMock.create!).mockResolvedValue(mockUser as any);
+      vi.mocked(userRepoMock.create!).mockResolvedValue(createdUser as any);
 
       const result = await service.register(registerData);
 
       expect(userRepoMock.findByEmail).toHaveBeenCalledWith("novo@test.com");
       expect(userRepoMock.create).toHaveBeenCalledWith(registerData);
-      expect(result).toEqual(mockUser);
+      expect(userRepoMock.setVerificationToken).toHaveBeenCalledWith(
+        "novo@test.com",
+        expect.any(String),
+        expect.any(Date),
+      );
+      expect(result).toEqual({
+        message: "Conta criada! Verifique seu email antes de fazer login.",
+      });
     });
 
     it("deve lançar HttpException 400 se email já estiver em uso", async () => {
@@ -99,7 +106,7 @@ describe("UserService", () => {
   describe("login", () => {
     const loginData = { email: "prof@test.com", password: "123456" };
 
-    it("deve realizar login com sucesso", async () => {
+    it("deve realizar login com sucesso e retornar isVerified", async () => {
       const user = {
         ...mockUser,
         isValidPassword: vi.fn().mockResolvedValue(true),
@@ -120,6 +127,7 @@ describe("UserService", () => {
       );
       expect(result.accessToken).toBe("access-token-123");
       expect(result.user.email).toBe("prof@test.com");
+      expect(result.user.isVerified).toBe(false);
     });
 
     it("deve lançar HttpException 401 se usuário não existir", async () => {
@@ -140,6 +148,67 @@ describe("UserService", () => {
       await expect(service.login(loginData)).rejects.toMatchObject({
         statusCode: 401,
       });
+    });
+  });
+
+  describe("verifyEmail", () => {
+    it("deve verificar o email com token válido", async () => {
+      vi.mocked(userRepoMock.findByEmailVerificationToken!).mockResolvedValue(mockUser as any);
+
+      await service.verifyEmail("valid-token");
+
+      expect(userRepoMock.findByEmailVerificationToken).toHaveBeenCalledWith("valid-token");
+      expect(userRepoMock.markAsVerified).toHaveBeenCalledWith("user-1");
+    });
+
+    it("deve lançar HttpException 400 se token for inválido", async () => {
+      vi.mocked(userRepoMock.findByEmailVerificationToken!).mockResolvedValue(null);
+
+      await expect(
+        service.verifyEmail("invalid-token"),
+      ).rejects.toMatchObject({ statusCode: 400, message: "Token inválido ou expirado" });
+    });
+  });
+
+  describe("sendVerificationEmail", () => {
+    it("deve gerar novo token e enfileirar email", async () => {
+      const { emaillQueue } = await import("../../modules/Users/Email.queue.js");
+      vi.mocked(userRepoMock.findByEmail!).mockResolvedValue({
+        ...mockUser,
+        isVerified: false,
+      } as any);
+
+      await service.sendVerificationEmail("prof@test.com");
+
+      expect(userRepoMock.setVerificationToken).toHaveBeenCalledWith(
+        "prof@test.com",
+        expect.any(String),
+        expect.any(Date),
+      );
+      expect(emaillQueue.add).toHaveBeenCalledWith(
+        "sendVerificationEmail",
+        { to: "prof@test.com", token: expect.any(String) },
+        expect.objectContaining({ attempts: 3 }),
+      );
+    });
+
+    it("deve lançar HttpException 404 se email não existir", async () => {
+      vi.mocked(userRepoMock.findByEmail!).mockResolvedValue(null);
+
+      await expect(
+        service.sendVerificationEmail("notfound@test.com"),
+      ).rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it("deve lançar HttpException 400 se email já for verificado", async () => {
+      vi.mocked(userRepoMock.findByEmail!).mockResolvedValue({
+        ...mockUser,
+        isVerified: true,
+      } as any);
+
+      await expect(
+        service.sendVerificationEmail("verified@test.com"),
+      ).rejects.toMatchObject({ statusCode: 400, message: "Email já verificado" });
     });
   });
 
@@ -257,6 +326,7 @@ describe("UserService", () => {
       expect(userRepoMock.findByEmail).toHaveBeenCalledWith("prof@test.com");
       expect(userRepoMock.create).not.toHaveBeenCalled();
       expect(result.user.email).toBe("prof@test.com");
+      expect(result.user.isVerified).toBe(true);
     });
 
     it("deve criar novo usuário se não existir no Google login", async () => {
@@ -280,9 +350,11 @@ describe("UserService", () => {
         expect.objectContaining({
           email: "novo@google.com",
           name: "Novo",
+          isVerified: true,
         }),
       );
       expect(result.user.email).toBe("novo@google.com");
+      expect(result.user.isVerified).toBe(true);
     });
 
     it("deve lançar HttpException 401 se payload do Google for inválido", async () => {

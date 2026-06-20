@@ -16,6 +16,8 @@ describe("UserController", () => {
             resetPassword: vi.fn(),
             googleLogin: vi.fn(),
             refreshAccessToken: vi.fn(),
+            verifyEmail: vi.fn(),
+            sendVerificationEmail: vi.fn(),
         };
         mockRepo = {};
         controller = new UserController(mockService, mockRepo);
@@ -34,13 +36,17 @@ describe("UserController", () => {
         next = vi.fn();
     });
     describe("register", () => {
-        it("deve registrar usuário e retornar 201", async () => {
+        it("deve registrar usuário e retornar 201 com mensagem de verificação", async () => {
             req.body = { name: "Prof", email: "prof@test.com", password: "123456" };
-            vi.mocked(mockService.register).mockResolvedValue({ _id: "user-1" });
+            vi.mocked(mockService.register).mockResolvedValue({
+                message: "Conta criada! Verifique seu email antes de fazer login.",
+            });
             await controller.register(req, res, next);
             expect(mockService.register).toHaveBeenCalledWith(req.body);
             expect(res.status).toHaveBeenCalledWith(201);
-            expect(res.json).toHaveBeenCalledWith({ _id: "user-1" });
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Conta criada! Verifique seu email antes de fazer login.",
+            });
         });
         it("deve chamar next com erro se registro falhar", async () => {
             req.body = { name: "Prof", email: "prof@test.com", password: "123456" };
@@ -92,6 +98,43 @@ describe("UserController", () => {
             });
         });
     });
+    describe("verifyEmail", () => {
+        it("deve verificar email e retornar 200", async () => {
+            req.params = { token: "valid-token" };
+            vi.mocked(mockService.verifyEmail).mockResolvedValue(undefined);
+            await controller.verifyEmail(req, res, next);
+            expect(mockService.verifyEmail).toHaveBeenCalledWith("valid-token");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Email verificado com sucesso!",
+            });
+        });
+        it("deve chamar next com erro se token for inválido", async () => {
+            req.params = { token: "invalid-token" };
+            const error = new HttpException("Token inválido ou expirado", 400);
+            vi.mocked(mockService.verifyEmail).mockRejectedValue(error);
+            await controller.verifyEmail(req, res, next);
+            expect(next).toHaveBeenCalledWith(error);
+        });
+    });
+    describe("resendVerification", () => {
+        it("deve reenviar email de verificação e retornar 200", async () => {
+            req.body = { email: "prof@test.com" };
+            vi.mocked(mockService.sendVerificationEmail).mockResolvedValue(undefined);
+            await controller.resendVerification(req, res, next);
+            expect(mockService.sendVerificationEmail).toHaveBeenCalledWith("prof@test.com");
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Email de verificação reenviado!",
+            });
+        });
+        it("deve retornar 400 se email não for fornecido", async () => {
+            req.body = {};
+            await controller.resendVerification(req, res, next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: "Email é obrigatório" });
+        });
+    });
     describe("forgotPassword", () => {
         it("deve enviar email e retornar 200", async () => {
             req.body = { email: "prof@test.com" };
@@ -115,12 +158,12 @@ describe("UserController", () => {
         });
     });
     describe("googleLogin", () => {
-        it("deve logar com Google e retornar tokens", async () => {
+        it("deve logar com Google e retornar tokens com isVerified", async () => {
             req.body = { credential: "google-token" };
             vi.mocked(mockService.googleLogin).mockResolvedValue({
                 accessToken: "at-123",
                 refreshToken: "rt-123",
-                user: { id: "user-1", name: "Prof", email: "prof@test.com" },
+                user: { id: "user-1", name: "Prof", email: "prof@test.com", isVerified: true },
             });
             await controller.googleLogin(req, res, next);
             expect(res.cookie).toHaveBeenCalled();

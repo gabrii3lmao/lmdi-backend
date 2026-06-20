@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SubmissionController } from "../../modules/Submission/Submission.controller.js";
 import { HttpException } from "../../config/errorHandler.js";
+vi.mock("../../config/multer.js", () => ({
+    generateUploadSignature: vi.fn(),
+}));
+import { generateUploadSignature } from "../../config/multer.js";
 describe("SubmissionController", () => {
     let mockService;
     let controller;
@@ -28,6 +32,29 @@ describe("SubmissionController", () => {
             json: vi.fn(),
         };
         next = vi.fn();
+    });
+    describe("getUploadSignature", () => {
+        it("deve retornar 200 com a assinatura de upload", async () => {
+            const mockSignature = {
+                signature: "signed-token",
+                timestamp: 1234567890,
+                cloudName: "demo",
+                apiKey: "12345",
+                uploadPreset: "preset",
+                folder: "submissions",
+            };
+            vi.mocked(generateUploadSignature).mockReturnValue(mockSignature);
+            await controller.getUploadSignature(req, res, next);
+            expect(generateUploadSignature).toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(mockSignature);
+        });
+        it("deve chamar next com erro se gerar assinatura falhar", async () => {
+            const error = new Error("Config error");
+            vi.mocked(generateUploadSignature).mockImplementation(() => { throw error; });
+            await controller.getUploadSignature(req, res, next);
+            expect(next).toHaveBeenCalledWith(error);
+        });
     });
     describe("createSubmission", () => {
         it("deve chamar next com HttpException 401 se não houver teacherId", async () => {
