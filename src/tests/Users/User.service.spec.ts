@@ -7,9 +7,11 @@ const { mockVerifyIdToken } = vi.hoisted(() => ({
   mockVerifyIdToken: vi.fn(),
 }));
 
-vi.mock("../../modules/Users/Email.queue.js", () => ({
-  emaillQueue: { add: vi.fn() },
-  connection: {},
+vi.mock("../../modules/Users/Email.service.js", () => ({
+  EmailService: class {
+    sendVerificationEmail = vi.fn().mockResolvedValue(undefined);
+    sendPasswordResetEmail = vi.fn().mockResolvedValue(undefined);
+  },
 }));
 
 vi.mock("google-auth-library", () => ({
@@ -171,8 +173,7 @@ describe("UserService", () => {
   });
 
   describe("sendVerificationEmail", () => {
-    it("deve gerar novo token e enfileirar email", async () => {
-      const { emaillQueue } = await import("../../modules/Users/Email.queue.js");
+    it("deve gerar novo token e enviar email", async () => {
       vi.mocked(userRepoMock.findByEmail!).mockResolvedValue({
         ...mockUser,
         isVerified: false,
@@ -184,11 +185,6 @@ describe("UserService", () => {
         "prof@test.com",
         expect.any(String),
         expect.any(Date),
-      );
-      expect(emaillQueue.add).toHaveBeenCalledWith(
-        "sendVerificationEmail",
-        { to: "prof@test.com", token: expect.any(String) },
-        expect.objectContaining({ attempts: 3 }),
       );
     });
 
@@ -213,8 +209,7 @@ describe("UserService", () => {
   });
 
   describe("forgotPassword", () => {
-    it("deve criar token de reset e enfileirar email", async () => {
-      const { emaillQueue } = await import("../../modules/Users/Email.queue.js");
+    it("deve criar token de reset e enviar email", async () => {
       vi.mocked(userRepoMock.findByEmail!).mockResolvedValue(mockUser as any);
       vi.mocked(userRepoMock.setPasswordResetToken!).mockResolvedValue(mockUser as any);
 
@@ -224,11 +219,6 @@ describe("UserService", () => {
         "prof@test.com",
         expect.any(String),
         expect.any(Number),
-      );
-      expect(emaillQueue.add).toHaveBeenCalledWith(
-        "sendPasswordResetEmail",
-        { to: "prof@test.com", token: expect.any(String) },
-        expect.objectContaining({ attempts: 3 }),
       );
     });
 

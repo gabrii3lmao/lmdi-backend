@@ -2,7 +2,7 @@ import generateToken, { verifyRefreshToken } from "../../config/jwtService.js";
 import type { LoginUserType, RegisterUserType } from "./dto/userTypes.js";
 import { UserRepository } from "./User.repository.js";
 import crypto from "crypto";
-import { emaillQueue } from "./Email.queue.js";
+import { EmailService } from "./Email.service.js";
 import { HttpException } from "../../config/errorHandler.js";
 import { OAuth2Client } from "google-auth-library";
 import { DeleteUserDataService } from "./DeleteUserDataService.js";
@@ -15,6 +15,7 @@ const deleteUserDataService = new DeleteUserDataService(
   new (await import("../Exams/Exam.repository.js")).ExamRepository(),
 );
 
+const emailService = new EmailService();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export class UserService {
@@ -36,14 +37,9 @@ export class UserService {
 
     await this._userRepository.setVerificationToken(user.email, token, expires);
 
-    await emaillQueue.add(
-      "sendVerificationEmail",
-      { to: user.email, token },
-      {
-        attempts: 3,
-        backoff: { type: "exponential", delay: 60000 },
-      },
-    );
+    emailService.sendVerificationEmail(user.email, token).catch((err) => {
+      console.error("[Email] Failed to send verification email:", err);
+    });
 
     return {
       message: "Conta criada! Verifique seu email antes de fazer login.",
@@ -102,14 +98,9 @@ export class UserService {
 
     await this._userRepository.setVerificationToken(email, token, expires);
 
-    await emaillQueue.add(
-      "sendVerificationEmail",
-      { to: user.email, token },
-      {
-        attempts: 3,
-        backoff: { type: "exponential", delay: 60000 },
-      },
-    );
+    emailService.sendVerificationEmail(user.email, token).catch((err) => {
+      console.error("[Email] Failed to resend verification email:", err);
+    });
   }
 
   async verifyEmail(token: string) {
@@ -132,20 +123,9 @@ export class UserService {
 
     await this._userRepository.setPasswordResetToken(email, token, expires);
 
-    await emaillQueue.add(
-      "sendPasswordResetEmail",
-      {
-        to: user.email,
-        token,
-      },
-      {
-        attempts: 3,
-        backoff: {
-          type: "exponential",
-          delay: 60000,
-        },
-      },
-    );
+    emailService.sendPasswordResetEmail(user.email, token).catch((err) => {
+      console.error("[Email] Failed to send password reset email:", err);
+    });
   }
 
   async resetPassword(token: string, newPassword: string) {

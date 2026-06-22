@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { Queue } from "bullmq";
 import { Redis } from "ioredis";
 
 export const connection = new Redis(
@@ -8,12 +7,8 @@ export const connection = new Redis(
 );
 
 connection.on("error", (err) => {
-  console.error("[Redis] Email queue connection error:", err);
+  console.error("[Redis] Connection error:", err);
 });
 connection.on("connect", () => {
-  console.log("[Redis] Email queue connected");
-});
-
-export const emaillQueue = new Queue("email-queue", {
-  connection: connection as any,
+  console.log("[Redis] Connected");
 });

@@ -1,6 +1,6 @@
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
-import { connection as redisClient } from "../modules/Users/Email.queue.js";
+import { connection as redisClient } from "../config/redis.js";
 
 let store;
 
