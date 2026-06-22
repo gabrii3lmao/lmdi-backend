@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import dns from "dns";
 import "dotenv/config";
 
 export class EmailService {
@@ -6,12 +7,18 @@ export class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
-    });
+      connectionTimeout: 10000,
+      lookup: (hostname: string, opts: any, cb: any) => {
+        dns.lookup(hostname, { ...opts, family: 4 }, cb);
+      },
+    } as any);
   }
 
   async sendPasswordResetEmail(to: string, token: string) {
