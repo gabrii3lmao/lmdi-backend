@@ -7,7 +7,12 @@ export const connection = new Redis(
   { maxRetriesPerRequest: null },
 );
 
-connection.on("error", () => {});
+connection.on("error", (err) => {
+  console.error("[Redis] Email queue connection error:", err);
+});
+connection.on("connect", () => {
+  console.log("[Redis] Email queue connected");
+});
 
 export const emaillQueue = new Queue("email-queue", {
   connection: connection as any,

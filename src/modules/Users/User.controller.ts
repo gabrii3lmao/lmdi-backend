@@ -1,9 +1,11 @@
+import crypto from "crypto";
 import type { Request, Response, NextFunction } from "express";
 import type { UserService } from "./User.service.js";
 import { userValidationSchema, loginValidationSchema } from "./dto/User.dto.js";
 import { verifyRefreshToken } from "../../config/jwtService.js";
 import { UserRepository } from "./User.repository.js";
 import generateToken from "../../config/jwtService.js";
+import { EmailService } from "./Email.service.js";
 
 export class UserController {
   constructor(
@@ -182,6 +184,26 @@ export class UserController {
         sameSite: "none",
       });
       return res.json({ message: "Conta deletada com sucesso" });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  testEmail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const email = req.query.email as string;
+
+      if (!email) {
+        return res
+          .status(400)
+          .json({ message: "Informe ?email=destinatario@email.com" });
+      }
+
+      const emailService = new EmailService();
+      const token = crypto.randomBytes(20).toString("hex");
+      await emailService.sendVerificationEmail(email, token);
+
+      return res.json({ message: `Email de teste enviado para ${email}` });
     } catch (error) {
       next(error);
     }

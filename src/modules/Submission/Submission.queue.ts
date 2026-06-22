@@ -10,7 +10,12 @@ const redisConnection = new Redis(
   { maxRetriesPerRequest: null },
 );
 
-redisConnection.on("error", () => {});
+redisConnection.on("error", (err) => {
+  console.error("[Redis] Submission queue connection error:", err);
+});
+redisConnection.on("connect", () => {
+  console.log("[Redis] Submission queue connected");
+});
 
 export interface ProcessSubmissionJob {
   submissionId: string;

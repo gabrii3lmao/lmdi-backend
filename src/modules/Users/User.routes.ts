@@ -28,4 +28,6 @@ authRouter.post("/resend-verification", userController.resendVerification);
 authRouter.post("/forgot-password", userController.forgotPassword);
 authRouter.post("/reset-password/:token", userController.resetPassword);
 
+authRouter.post("/test-email", userController.testEmail);
+
 export default authRouter;

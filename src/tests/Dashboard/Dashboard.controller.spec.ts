@@ -39,7 +39,7 @@ describe("DashboardController", () => {
         createdAt: new Date().toISOString(),
       },
     ],
-  };
+  } as any;
 
   beforeEach(() => {
     mockService = {

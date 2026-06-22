@@ -20,5 +20,9 @@ export const emailWorker = new Worker(
 );
 
 emailWorker.on("failed", (job, err) => {
-  console.error(`Job ${job!.id} failed with error:`, err);
+  console.error(`[Email Worker] Job ${job!.id} failed:`, err);
+});
+
+emailWorker.on("error", (err) => {
+  console.error("[Email Worker] Worker error:", err);
 });
