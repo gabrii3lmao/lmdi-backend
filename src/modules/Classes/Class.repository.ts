@@ -45,4 +45,17 @@ export class ClassRepository {
   async deleteManyByUserId(userId: string) {
     await Class.deleteMany({ teacherId: userId });
   }
+
+  async countByTeacher(teacherId: string): Promise<number> {
+    return await Class.countDocuments({ teacherId });
+  }
+
+  async findRecentByTeacher(
+    teacherId: string,
+    limit: number,
+  ): Promise<IClass[]> {
+    return await Class.find({ teacherId })
+      .sort({ createdAt: -1 })
+      .limit(limit);
+  }
 }

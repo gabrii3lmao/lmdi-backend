@@ -45,4 +45,12 @@ export class ExamRepository {
   async deleteManyByUserId(userId: string) {
     await Exam.deleteMany({ teacherId: userId });
   }
+
+  async countByTeacher(teacherId: string): Promise<number> {
+    return await Exam.countDocuments({ teacherId });
+  }
+
+  async countByClassId(classId: string): Promise<number> {
+    return await Exam.countDocuments({ classId });
+  }
 }

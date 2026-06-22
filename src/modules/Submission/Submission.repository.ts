@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Submission, { type ISubmission } from "./Submission.model.js";
 
 export class SubmissionRepository {
@@ -83,5 +84,41 @@ export class SubmissionRepository {
 
   async deleteManyByUserId(userId: string) {
     return await Submission.deleteMany({ userId });
+  }
+
+  async countByTeacher(teacherId: string): Promise<number> {
+    return await Submission.countDocuments({ userId: teacherId });
+  }
+
+  async countByStatus(
+    teacherId: string,
+  ): Promise<{ pending: number; success: number; error: number }> {
+    const [pending, success, error] = await Promise.all([
+      Submission.countDocuments({ userId: teacherId, status: "pending" }),
+      Submission.countDocuments({ userId: teacherId, status: "success" }),
+      Submission.countDocuments({ userId: teacherId, status: "error" }),
+    ]);
+    return { pending, success, error };
+  }
+
+  async getAverageScore(teacherId: string): Promise<number> {
+    const result = await Submission.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(teacherId), status: "success" } },
+      { $group: { _id: null, avgScore: { $avg: "$score" } } },
+    ]);
+    return result[0]?.avgScore ?? 0;
+  }
+
+  async findRecentByTeacher(teacherId: string, limit: number) {
+    return await Submission.find({ userId: teacherId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate("examId", "title")
+      .populate("classId", "name")
+      .lean();
+  }
+
+  async countByClassId(classId: string): Promise<number> {
+    return await Submission.countDocuments({ classId });
   }
 }

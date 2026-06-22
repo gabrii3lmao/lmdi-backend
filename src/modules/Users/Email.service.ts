@@ -8,8 +8,8 @@ export class EmailService {
     this.transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, // Use variáveis de ambiente!
-        pass: process.env.EMAIL_PASS, // Use variáveis de ambiente!
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
   }
@@ -19,7 +19,7 @@ export class EmailService {
       from: '"Suporte LetMeDoIt" <no-reply@letmedoit.com>',
       to,
       subject: "Recuperação de Senha",
-      text: `Olá! 
+      text: `Olá!
 
 Recebemos uma solicitação para redefinir a senha da sua conta no LetMeDoIt.
 
