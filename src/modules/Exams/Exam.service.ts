@@ -70,12 +70,16 @@ export class ExamService {
             updateData.answerKey!.length, 
           );
 
-          return this._submissionService.updateSubmission(submission._id as unknown as string, {
-            score: result.score,
-            totalCorrect: result.totalCorrect,
-            details: result.details, 
-            status: "success",
-          });
+          return this._submissionService.updateSubmission(
+            submission._id as unknown as string,
+            teacherId,
+            {
+              score: result.score,
+              totalCorrect: result.totalCorrect,
+              details: result.details,
+              status: "success",
+            },
+          );
         });
 
         await Promise.all(updatePromises);

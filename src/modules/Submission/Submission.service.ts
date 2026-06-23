@@ -90,9 +90,10 @@ export class SubmissionService {
     examId: string,
     page: number,
     limit: number,
+    status?: string,
   ): Promise<PaginatedResponse<ISubmission>> {
     const { data, totalItems } =
-      await this._submissionRepo.findByExamIdPaginated(examId, page, limit);
+      await this._submissionRepo.findByExamIdPaginated(examId, page, limit, status);
     return {
       data,
       totalItems,
@@ -105,14 +106,131 @@ export class SubmissionService {
     return await this._submissionRepo.getSubmissionsAnswersById(submissionId);
   }
 
-  async updateSubmission(submissionId: string, updateData: Partial<ISubmission>) {
+  async updateSubmission(
+    submissionId: string,
+    teacherId: string,
+    updateData: Partial<ISubmission>,
+  ) {
     const submission = await this._submissionRepo.findById(submissionId);
 
     if (!submission) {
       throw new HttpException("Submissão não encontrada", 404);
     }
 
+    if (submission.userId.toString() !== teacherId) {
+      throw new HttpException("Não autorizado", 403);
+    }
+
     return await this._submissionRepo.update(submissionId, updateData);
+  }
+
+  async reprocessSubmission(submissionId: string, teacherId: string) {
+    const submission = await this._submissionRepo.findById(submissionId);
+
+    if (!submission) {
+      throw new HttpException("Submissão não encontrada", 404);
+    }
+
+    if (submission.userId.toString() !== teacherId) {
+      throw new HttpException("Não autorizado", 403);
+    }
+
+    if (submission.status !== "error") {
+      throw new HttpException("Submissão não está com status de erro", 400);
+    }
+
+    const exam = await this._examRepo.findByIdAndTeacher(
+      submission.examId.toString(),
+      teacherId,
+    );
+
+    if (!exam) {
+      throw new HttpException("Gabarito não encontrado", 404);
+    }
+
+    await this._submissionRepo.update(submissionId, {
+      status: "pending",
+      score: undefined,
+      totalCorrect: undefined,
+      details: undefined,
+    });
+
+    await submissionQueue.add(`reprocess-${submissionId}`, {
+      submissionId,
+      examId: submission.examId.toString(),
+      imageUrl: submission.imageUrl,
+      answerKey: exam.answerKey,
+      questionsCount: exam.questionsCount,
+    });
+
+    return { message: "Submissão re-enfileirada para processamento" };
+  }
+
+  async batchReprocessSubmissions(examId: string, teacherId: string) {
+    const exam = await this._examRepo.findByIdAndTeacher(examId, teacherId);
+
+    if (!exam) {
+      throw new HttpException("Gabarito não encontrado", 404);
+    }
+
+    const failedSubmissions = await this._submissionRepo.findByExamIdAndStatus(
+      examId,
+      "error",
+    );
+
+    if (failedSubmissions.length === 0) {
+      throw new HttpException("Nenhuma submissão com erro encontrada", 400);
+    }
+
+    const jobs = failedSubmissions.map((submission) => ({
+      name: `batch-reprocess-${submission._id}`,
+      data: {
+        submissionId: submission._id.toString(),
+        examId,
+        imageUrl: submission.imageUrl,
+        answerKey: exam.answerKey,
+        questionsCount: exam.questionsCount,
+      },
+      opts: {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 2000,
+        },
+      },
+    }));
+
+    await Promise.all(
+      failedSubmissions.map((submission) =>
+        this._submissionRepo.update(submission._id.toString(), {
+          status: "pending" as const,
+          score: undefined,
+          totalCorrect: undefined,
+          details: undefined,
+        }),
+      ),
+    );
+
+    await submissionQueue.addBulk(jobs);
+
+    return {
+      message: `${failedSubmissions.length} submissão(ões) re-enfileirada(s) para processamento`,
+      count: failedSubmissions.length,
+    };
+  }
+
+  async deleteSubmission(submissionId: string, teacherId: string) {
+    const submission = await this._submissionRepo.findById(submissionId);
+
+    if (!submission) {
+      throw new HttpException("Submissão não encontrada", 404);
+    }
+
+    if (submission.userId.toString() !== teacherId) {
+      throw new HttpException("Não autorizado", 403);
+    }
+
+    await this._submissionRepo.delete(submissionId);
   }
 
   async generateExcelReport(examId: string, teacherId: string): Promise<ExcelJS.Buffer> {

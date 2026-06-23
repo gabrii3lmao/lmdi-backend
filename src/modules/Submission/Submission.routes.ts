@@ -11,6 +11,8 @@ import {
   classIdParamsSchema,
   examIdQuerySchema,
   examIdParamsSchema,
+  updateSubmissionSchema,
+  deleteSubmissionParamsSchema,
 } from "./dto/submission.dto.js";
 import { paginationQuerySchema } from "../common/dto/pagination.dto.js";
 
@@ -63,6 +65,31 @@ submissionRouter.get(
   "/:examId/analytics",
   validate(examIdParamsSchema, "params"),
   submissionController.getAnalytics,
+);
+
+submissionRouter.post(
+  "/:submissionId/reprocess",
+  validate(submissionIdParamsSchema, "params"),
+  submissionController.reprocess,
+);
+
+submissionRouter.post(
+  "/:examId/batch-reprocess",
+  validate(examIdParamsSchema, "params"),
+  submissionController.batchReprocess,
+);
+
+submissionRouter.put(
+  "/:submissionId",
+  validate(submissionIdParamsSchema, "params"),
+  validate(updateSubmissionSchema),
+  submissionController.update,
+);
+
+submissionRouter.delete(
+  "/:submissionId",
+  validate(deleteSubmissionParamsSchema, "params"),
+  submissionController.delete,
 );
 
 export default submissionRouter;

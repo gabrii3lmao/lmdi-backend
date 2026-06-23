@@ -27,13 +27,20 @@ export class SubmissionRepository {
     examId: string,
     page: number,
     limit: number,
+    status?: string,
   ): Promise<{ data: ISubmission[]; totalItems: number }> {
     const skip = (page - 1) * limit;
+    const filter: Record<string, unknown> = { examId };
+    if (status) filter.status = status;
     const [data, totalItems] = await Promise.all([
-      Submission.find({ examId }).skip(skip).limit(limit),
-      Submission.countDocuments({ examId }),
+      Submission.find(filter).skip(skip).limit(limit),
+      Submission.countDocuments(filter),
     ]);
     return { data, totalItems };
+  }
+
+  async findByExamIdAndStatus(examId: string, status: string) {
+    return await Submission.find({ examId, status });
   }
 
   async findByIdAndClassId(id: string, classId: string) {
@@ -76,10 +83,18 @@ export class SubmissionRepository {
     return await Submission.findById(submissionId);
   }
 
+  async findManyByIds(submissionIds: string[]) {
+    return await Submission.find({ _id: { $in: submissionIds } });
+  }
+
   async update(submissionId: string, updateData: Partial<ISubmission>) {
     return await Submission.findByIdAndUpdate(submissionId, updateData, {
       returnDocument: "after",
     });
+  }
+
+  async delete(submissionId: string) {
+    return await Submission.findByIdAndDelete(submissionId);
   }
 
   async deleteManyByUserId(userId: string) {

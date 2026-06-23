@@ -60,8 +60,9 @@ export class SubmissionController {
     next: NextFunction,
   ) => {
     try {
-      const { examId } = req.query as {
+      const { examId, status } = req.query as {
         examId: string;
+        status?: string;
       };
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 10;
@@ -71,6 +72,7 @@ export class SubmissionController {
           examId,
           page,
           limit,
+          status,
         );
 
       return res.status(200).json(submissions);
@@ -177,6 +179,88 @@ export class SubmissionController {
       );
 
       return res.status(200).json(analytics);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  reprocess = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const teacherId = req.user?.id;
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
+      const { submissionId } = req.params;
+
+      const result = await this._submissionService.reprocessSubmission(
+        submissionId as string,
+        teacherId,
+      );
+
+      return res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  batchReprocess = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const teacherId = req.user?.id;
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
+      const { examId } = req.params;
+
+      const result = await this._submissionService.batchReprocessSubmissions(
+        examId as string,
+        teacherId,
+      );
+
+      return res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  update = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const teacherId = req.user?.id;
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
+      const { submissionId } = req.params;
+      const updatedData = req.body;
+
+      const updated = await this._submissionService.updateSubmission(
+        submissionId as string,
+        teacherId,
+        updatedData,
+      );
+
+      return res.status(200).json(updated);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  delete = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const teacherId = req.user?.id;
+      if (!teacherId) {
+        throw new HttpException("Não autenticado", 401);
+      }
+
+      const { submissionId } = req.params;
+
+      await this._submissionService.deleteSubmission(
+        submissionId as string,
+        teacherId,
+      );
+
+      return res.status(204).send();
     } catch (error) {
       next(error);
     }

@@ -22,10 +22,31 @@ export const classIdParamsSchema = z.object({
 
 export const examIdQuerySchema = z.object({
   examId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+  status: z.enum(["pending", "success", "error"]).optional(),
 });
 
 export const examIdParamsSchema = z.object({
   examId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+});
+
+export const updateSubmissionSchema = z.object({
+  studentName: z.string().min(1).optional(),
+  score: z.number().min(0).max(10).optional(),
+  totalCorrect: z.number().min(0).optional(),
+  details: z
+    .array(
+      z.object({
+        question: z.number(),
+        marked: z.string().nullable(),
+        correct: z.string(),
+        status: z.enum(["correct", "incorrect", "invalid"]),
+      }),
+    )
+    .optional(),
+});
+
+export const deleteSubmissionParamsSchema = z.object({
+  submissionId: z.string().regex(/^[0-9a-fA-F]{24}$/),
 });
 
 export type CreateSubmissionDTO = z.infer<typeof createSubmissionSchema>;

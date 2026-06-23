@@ -28,6 +28,7 @@ describe("SubmissionService", () => {
       getSubmissionsAnswersById: vi.fn(),
       findById: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     };
 
     service = new SubmissionService(
@@ -144,7 +145,7 @@ describe("SubmissionService", () => {
 
       const result = await service.getSubmissionsByExamPaginated("exam-1", 1, 10);
 
-      expect(subRepoMock.findByExamIdPaginated).toHaveBeenCalledWith("exam-1", 1, 10);
+      expect(subRepoMock.findByExamIdPaginated).toHaveBeenCalledWith("exam-1", 1, 10, undefined);
       expect(result).toEqual({
         data: [{ _id: "sub-1" }],
         totalItems: 1,
@@ -215,22 +216,65 @@ describe("SubmissionService", () => {
       vi.mocked(subRepoMock.findById!).mockResolvedValue(null);
 
       await expect(
-        service.updateSubmission("not-found", { score: 10 }),
+        service.updateSubmission("not-found", "teacher-id", { score: 10 }),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it("deve lançar HttpException 403 se não for o dono", async () => {
+      const existing = { _id: "sub-1", userId: "other-teacher", status: "pending" };
+
+      vi.mocked(subRepoMock.findById!).mockResolvedValue(existing as any);
+
+      await expect(
+        service.updateSubmission("sub-1", "teacher-id", { score: 10 }),
       ).rejects.toThrow(HttpException);
     });
 
     it("deve atualizar a submissão com sucesso", async () => {
-      const existing = { _id: "sub-1", status: "pending" };
+      const existing = { _id: "sub-1", userId: "teacher-id", status: "pending" };
       const updated = { _id: "sub-1", status: "success", score: 10 };
 
       vi.mocked(subRepoMock.findById!).mockResolvedValue(existing as any);
       vi.mocked(subRepoMock.update!).mockResolvedValue(updated as any);
 
-      const result = await service.updateSubmission("sub-1", { status: "success", score: 10 });
+      const result = await service.updateSubmission("sub-1", "teacher-id", {
+        status: "success",
+        score: 10,
+      });
 
       expect(subRepoMock.findById).toHaveBeenCalledWith("sub-1");
       expect(subRepoMock.update).toHaveBeenCalledWith("sub-1", { status: "success", score: 10 });
       expect(result).toEqual(updated);
+    });
+
+    it("deve lançar HttpException 404 ao deletar submissão inexistente", async () => {
+      vi.mocked(subRepoMock.findById!).mockResolvedValue(null);
+
+      await expect(
+        service.deleteSubmission("not-found", "teacher-id"),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it("deve lançar HttpException 403 ao deletar submissão de outro professor", async () => {
+      const existing = { _id: "sub-1", userId: "other-teacher" };
+
+      vi.mocked(subRepoMock.findById!).mockResolvedValue(existing as any);
+
+      await expect(
+        service.deleteSubmission("sub-1", "teacher-id"),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it("deve deletar submissão com sucesso", async () => {
+      const existing = { _id: "sub-1", userId: "teacher-id" };
+
+      vi.mocked(subRepoMock.findById!).mockResolvedValue(existing as any);
+      vi.mocked(subRepoMock.delete!).mockResolvedValue(existing as any);
+
+      await service.deleteSubmission("sub-1", "teacher-id");
+
+      expect(subRepoMock.findById).toHaveBeenCalledWith("sub-1");
+      expect(subRepoMock.delete).toHaveBeenCalledWith("sub-1");
     });
   });
 });

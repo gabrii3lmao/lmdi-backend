@@ -147,7 +147,7 @@ describe("SubmissionController", () => {
 
       await controller.getAllSubmissions(req as Request, res as Response, next as NextFunction);
 
-      expect(mockService.getSubmissionsByExamPaginated).toHaveBeenCalledWith("exam-123", 1, 10);
+      expect(mockService.getSubmissionsByExamPaginated).toHaveBeenCalledWith("exam-123", 1, 10, undefined);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockResult);
     });
@@ -163,7 +163,7 @@ describe("SubmissionController", () => {
 
       await controller.getAllSubmissions(req as Request, res as Response, next as NextFunction);
 
-      expect(mockService.getSubmissionsByExamPaginated).toHaveBeenCalledWith("exam-123", 1, 10);
+      expect(mockService.getSubmissionsByExamPaginated).toHaveBeenCalledWith("exam-123", 1, 10, undefined);
     });
 
     it("deve chamar next com erro se o service lançar exceção", async () => {
