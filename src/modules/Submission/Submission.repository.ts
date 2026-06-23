@@ -39,7 +39,7 @@ export class SubmissionRepository {
     return { data, totalItems };
   }
 
-  async findByExamIdAndStatus(examId: string, status: string) {
+  async findByExamIdAndStatus(examId: string, status: "success" | "pending" | "error") {
     return await Submission.find({ examId, status });
   }
 
